@@ -208,8 +208,9 @@ def import_files(download, manager, library, firstRun=True):
                 continue
 
         # Map filename to desired renaming pattern
-        dest = get_mapped_path(file.original_filename, download.media_type, \
-            library.pattern, fullpath)
+        metadata = get_metadata(file.original_filename, download, fullpath)
+        dest = pattern_replace(library.pattern, metadata)
+        print dest
         if dest:
             while dest.find('//') > -1:
                 dest = dest.replace('//', '/')
@@ -238,13 +239,6 @@ def file_op_complete(success, download, file, firstRun, newdir, newfile, newtype
         file.media_type = newtype
     elif firstRun:
         download.files.remove(file)
-
-def get_mapped_path(path, download, pattern, filename=None):
-    try:
-        metadata = get_metadata(path, download, filename)
-        return pattern_replace(pattern, metadata)
-    except Exception as e:
-        return path
 
 def get_metadata(path, source, filename=None):
 
@@ -297,6 +291,9 @@ def normalize_metadata(metadata, name=None):
         metadata['Z'] = metadata['Z'].replace(' ', '.')
         metadata['Z'] = metadata['Z'].replace('_', '.')
         metadata['z'] = metadata['Z'].replace('.', ' ')
+    elif name:
+        metadata['z'] = name
+        metadata['Z'] = metadata['z'].replace(' ', '.')
 
     if metadata['n']:
         metadata['n'] = metadata['n'].replace('.', ' ')
@@ -306,9 +303,6 @@ def normalize_metadata(metadata, name=None):
         metadata['N'] = metadata['N'].replace(' ', '.')
         metadata['N'] = metadata['N'].replace('_', '.')
         metadata['n'] = metadata['N'].replace('.', ' ')
-    elif name:
-        metadata['n'] = name
-        metadata['N'] = metadata['n'].replace(' ', '.')
     else:
         metadata['n'] = 'Unknown Title'
         metadata['N'] = 'Unknown.Title'
