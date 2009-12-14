@@ -63,21 +63,21 @@ match_patterns = {
         #re.compile(r's(?P<s>\d{1,2})\W?e(?P<e>\d{1,2}).*\.(?P<x>\w+)$', re.IGNORECASE),
         # 01x01.avi
         #re.compile(r'(?P<s>\d{1,2})x(?P<e>\d{1,2}).*\.(?P<x>\w+)$', re.IGNORECASE),
-        # Show Name - s01e01.avi
-        re.compile(r'(?P<z>[\w -\.]+?)\W*s(?P<s>\d{1,2})\W?e(?P<e>\d{1,2}).*\.(?P<x>\w+)$', re.IGNORECASE),
-        # Show Name - 01x01.avi
-        re.compile(r'(?P<z>[\w -\.]+?)\W*(?P<s>\d{1,2})x(?P<e>\d{1,2}).*\.(?P<x>\w+)$', re.IGNORECASE),
         # Show Name - Episode Title s01.e01.Episode.Title.avi
         re.compile(r'(?P<z>[\w \.]+?)\W*-\W*(?P<n>[\w \.]+?)\W*s(?P<s>\d{1,2})\W?e(?P<e>\d{1,2}).*\.(?P<x>\w+)$', re.IGNORECASE),
         # Show.Name.s01.e01.Episode.Title.avi
         # Show.Name.s01e01.Episode.Title.avi
         # Show_Name.s01e01_Episode_Title.avi
         # Show Name - s01e01 - Episode Title.avi
-        re.compile(r'(?P<z>[\w -\.]+?)\W*s(?P<s>\d{1,2})\W?e(?P<e>\d{1,2})\W*(?P<n>[\w -\.]*\w).*\.(?P<x>\w+)$', re.IGNORECASE),
+        re.compile(r'(?P<z>[\w -\.]+?)\W*s(?P<s>\d{1,2})\W?e(?P<e>\d{1,2})\W*(?P<n>[\w -\.]*\w)?.*\.(?P<x>\w+)$', re.IGNORECASE),
         # Show.Name.01x01.Episode.Title.avi
         # Show_Name_01x01_Episode_Title.avi
         # Show Name - 01x01 - Episode Title.avi
-        re.compile(r'(?P<z>[\w -\.]+?)\W*(?P<s>\d{1,2})x(?P<e>\d{1,2})\W*(?P<n>[\w -\.]*\w).*\.(?P<x>\w+)$', re.IGNORECASE),
+        re.compile(r'(?P<z>[\w -\.]+?)\W*(?P<s>\d{1,2})x(?P<e>\d{1,2})\W*(?P<n>[\w -\.]*\w)?.*\.(?P<x>\w+)$', re.IGNORECASE),
+        # Show Name - s01e01.avi
+        #re.compile(r'(?P<z>[\w -\.]+?)\W*s(?P<s>\d{1,2})\W?e(?P<e>\d{1,2}).*\.(?P<x>\w+)$', re.IGNORECASE),
+        # Show Name - 01x01.avi
+        #re.compile(r'(?P<z>[\w -\.]+?)\W*(?P<s>\d{1,2})x(?P<e>\d{1,2}).*\.(?P<x>\w+)$', re.IGNORECASE),
     ],
     'video/other': [
     ],
