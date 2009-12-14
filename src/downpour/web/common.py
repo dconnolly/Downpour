@@ -71,10 +71,9 @@ class Resource(resource.Resource):
                 'title': 'Template Not Found',
                 'message': 'Could not load page template: %s' % template
                 })
-        # Bad, but twisted.web doesn't accept unicode
-        request.write(str(t.render(defaults)))
-        request.finish();
-        return server.NOT_DONE_YET
+
+        request.setHeader('Content-type', 'text/html; charset=UTF-8')
+        return t.render(defaults).encode('utf8')
 
 class AuthenticatedResource(Resource):
 
