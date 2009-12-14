@@ -150,7 +150,6 @@ class Daemon:
 
     def run(self):
         launch_class = self.get_class(self.launcher)
-        print launch_class
         launch_class(*self.args, **self.kwargs).run()
 
     def get_class(self, kls):

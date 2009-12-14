@@ -164,7 +164,7 @@ def feed_parsed(parsed, feeds, manager, feed):
 
     # Process the next feed
     if len(feeds):
-        update_feeds(feeds, manager)
+        update_feeds(feeds, manager.application)
 
 def seen(m, items):
     for i in items:
@@ -182,4 +182,4 @@ def feed_parse_failed(failure, feeds, manager, feed):
     manager.store.commit()
 
     if len(feeds):
-        update_feeds(feeds, manager)
+        update_feeds(feeds, manager.application)
