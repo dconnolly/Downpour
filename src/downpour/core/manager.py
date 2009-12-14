@@ -396,10 +396,10 @@ class GlobalManager(Manager):
             max_dlrate = int(self.get_setting('download_rate', 0)) * 1024
             max_conn = int(self.get_setting('connection_limit', 0))
 
-            # TODO properly handle bandwidth/connection limits
+            downloads = self.get_downloads()[:]
 
             # TODO make this fairly distributed among users
-            for d in filter(lambda x: x.status == Status.QUEUED and not x.active, self.get_downloads()):
+            for d in filter(lambda x: x.status == Status.QUEUED and not x.active, downloads):
                 if not max_active or active < max_active:
                     self.start_download(d.id)
                     active = active + 1
@@ -408,14 +408,30 @@ class GlobalManager(Manager):
 
             # Auto stop downloads if we're over config limits
             if max_active and active > max_active:
-                revdl = self.get_downloads()[:]
-                revdl.reverse()
-                for d in filter(lambda x: x.active, revdl):
+                downloads.reverse()
+                for d in filter(lambda x: x.active, downloads):
                     if active > max_active:
                         self.stop_download(d.id)
                         active = active - 1;
                     else:
                         break
+
+            # Reset transfer limits
+            if max_ulrate > 0:
+                client_ulrate = int(max_ulrate / active)
+                for d in filter(lambda x: x.active, downloads):
+                    dc = self.get_download_client(d.id)
+                    dc.set_upload_rate(client_ulrate)
+            if max_dlrate > 0:
+                client_dlrate = int(max_dlrate / active)
+                for d in filter(lambda x: x.active, downloads):
+                    dc = self.get_download_client(d.id)
+                    dc.set_download_rate(client_dlrate)
+            if max_conn > 0:
+                client_conn = int(max_conn / active)
+                for d in filter(lambda x: x.active, downloads):
+                    dc = self.get_download_client(d.id)
+                    dc.set_max_connections(client_conn)
 
     def get_downloads(self):
         return list(self.store.find(models.Download,

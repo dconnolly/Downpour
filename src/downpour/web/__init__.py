@@ -80,7 +80,7 @@ class WebInterfacePlugin(Plugin):
 
         daystr = '';
         if days > 0:
-            daystr = str(days) + 'd '
+            daystr = '%dd ' % days
 
         return '%s%d:%.2d:%.2d' % (daystr, hours, minutes, seconds)
 

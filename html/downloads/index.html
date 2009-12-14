@@ -150,7 +150,7 @@
 						</td>
 						<td align="center" class="nowrap">
 							{% if client.is_running() and client.can_upload() %}
-								{{ dl.downloadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
+								{{ dl.uploadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
 							{% endif %}
 						</td>
 						<td align="center" class="nowrap">

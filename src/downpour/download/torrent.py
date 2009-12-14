@@ -27,28 +27,6 @@ class LibtorrentManager:
         # settings.share_ratio_limit = float(self.manager.get_setting('upload_ratio', 0))
         self.session.set_settings(settings)
 
-        """
-        ulrate = int(self.manager.get_setting('upload_rate', 0))
-        if ulrate:
-            ulrate = ulrate * 1024
-        else:
-            ulrate = -1
-
-        dlrate = int(self.manager.get_setting('download_rate', 0))
-        if dlrate:
-            dlrate = dlrate * 1024
-        else:
-            dlrate = -1
-
-        conn = int(self.manager.get_setting('connection_limit', 0))
-        if not conn:
-            conn = -1
-
-        self.session.set_upload_rate_limit(ulrate)
-        self.session.set_download_rate_limit(dlrate)
-        self.session.set_max_connections(conn)
-        """
-
         # Update torrent status every 5 seconds
         self.status_update = task.LoopingCall(self.status_update)
         self.status_update.start(2.0)
@@ -253,13 +231,20 @@ class LibtorrentClient(DownloadClient):
             self.torrent = None
         return self.dfm['state_changed_alert']
 
-    def set_download_rate(rate):
+    def set_download_rate(self, rate):
+        if rate != self.download_rate:
+            lt_manager.limits_updated = True
         self.download_rate = rate
-        lt_manager.limits_updated = True
 
-    def set_upload_rate(rate):
+    def set_upload_rate(self, rate):
+        if rate != self.upload_rate:
+            lt_manager.limits_updated = True
         self.upload_rate = rate
-        lt_manager.limits_updated = True
+
+    def set_max_connections(self, limit):
+        if limit != self.max_connections:
+            lt_manager.limits_updated = True
+        self.max_connections = limit
 
     def get_files(self):
         files = []
