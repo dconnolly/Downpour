@@ -14,7 +14,7 @@ class Application:
             'password': ''
         },
         'downpour.remote.RemotePlugin': {
-            'interface': 'localhost',
+            'interface': '0.0.0.0',
             'port': 6226
         }
     }

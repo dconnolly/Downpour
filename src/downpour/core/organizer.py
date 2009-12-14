@@ -419,7 +419,7 @@ def get_media_libraries(userlibs):
             if l.media_type == t:
                 libraries[t] = l
         if not t in libraries:
-            libraries[t] = models.Library()
+            libraries[t] = None
     return libraries
 
 def get_file_patterns():

@@ -23,11 +23,14 @@ class WebInterfacePlugin(Plugin):
             self.templateFactory.filters['workinglink'] = self.workinglink
             self.templateFactory.filters['librarylink'] = self.librarylink
 
+            iface = '0.0.0.0'
+            if 'interface' in config:
+                iface = config['interface']
             root = SiteRoot(templateDir, self.application)
             site = server.Site(root)
             site.requestFactory = requestFactory(self)
             site.sessionFactory = sessionFactory(self)
-            reactor.listenTCP(int(config['port']), site, interface=config['interface'])
+            reactor.listenTCP(int(config['port']), site, interface=iface)
 
     def progressbar(self, percentage, width=100, style=None, label=''):
         pixwidth = ''
