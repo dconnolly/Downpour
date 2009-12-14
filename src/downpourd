@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-from downpour.core.application import Application
 from downpour.core.daemon import Daemon
 from optparse import OptionParser
 import logging
@@ -14,6 +13,10 @@ parser.add_option("-p", "--port", dest="port", type="int",
                     help="Port to listen on")
 parser.add_option("--pid-file", default="/var/run/downpour.pid", dest="pidfile",
                     help="File to write daemon's PID to")
+parser.add_option("--stderr", default="/tmp/downpour.err", dest="stderr",
+                    help="File for STDERR output")
+parser.add_option("--stdout", default="/tmp/downpour.out", dest="stdout",
+                    help="File for STDOUT output")
 parser.add_option("-u", "--user", dest="user", help="User to run as")
 parser.add_option("-g", "--group", dest="group", help="Group to run as")
 parser.add_option("--umask", default=077, dest="umask", type="int",
@@ -23,23 +26,24 @@ parser.add_option("-d", "--debug", action="store_true", dest="debug",
 (options, args) = parser.parse_args()
 optdict = options.__dict__
 
-def downpour_launcher(options):
-    a = Application(options)
-    def launcher():
-        a.run()
-    return launcher
-
 if options.debug:
-    optdict['log'] = logging.DEBUG
-    downpour_launcher(optdict)()
+    optdict['log'] = 'debug'
+    from downpour.core import application
+    application.Application(optdict).run()
 else:
-    d = Daemon(downpour_launcher(optdict), options.pidfile, user=options.user, group=options.group)
+    d = Daemon('downpour.core.application.Application', \
+        pidfile=options.pidfile, user=options.user, group=options.group, \
+        stdout=options.stdout, stderr=options.stderr)
+    d.args = (optdict,)
     actions = {
         'start': d.start,
         'stop': d.stop,
         'restart': d.restart
     }
-    if (len(args) and actions[args[0]]):
-        actions[args[0]]()
+    if len(args):
+        if args[0] in actions:
+            actions[args[0]]()
+        else:
+            print "Valid actions: start|stop|restart"
     else:
-        print "Valid actions: start|stop|restart"
+        d.start()

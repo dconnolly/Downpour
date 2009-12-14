@@ -34,6 +34,7 @@
 					<li{% if section == 'status' %} class="active"{% endif %}><a href="/status/">Status</a></li>
 					{% if user and user.admin %}
 					<li><hr /></li>
+					<li{% if section == 'work' %} class="active"{% endif %}><a href="/work/">Download Cache</a></li>
 					<li{% if section == 'users' %} class="active"{% endif %}><a href="/users/">Users</a></li>
 					<li{% if section == 'settings' %} class="active"{% endif %}><a href="/settings/">Settings</a></li>
 					{% endif %}

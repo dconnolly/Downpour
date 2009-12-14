@@ -4,7 +4,7 @@ from twisted.internet import defer, task, reactor
 from twisted.web import client
 from twisted.python import failure
 import libtorrent as lt
-import os, logging, marshal, math
+import os, marshal, math, sys
 
 class LibtorrentManager:
 
@@ -92,8 +92,10 @@ class LibtorrentManager:
             self.limits_updated = False
 
     def process_alerts(self):
+        sys.stdout.flush()
         alert = self.session.pop_alert()
         while alert:
+            sys.stdout.flush()
             alert_type = str(type(alert)).split("'")[1].split(".")[-1]
             if not (hasattr(alert, 'handle') and self.dispatch_alert(alert, alert_type)):
                 # print("GLOBAL: %s: %s" % (alert_type, alert.message()))

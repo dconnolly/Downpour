@@ -42,6 +42,7 @@ class Application:
         # Override a limited set of options from command line
         if options:
             sections = {
+                'log': self.options['downpour'],
                 'port': self.options['downpour.remote.RemotePlugin'],
                 'interface': self.options['downpour.remote.RemotePlugin']
             }

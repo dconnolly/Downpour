@@ -43,7 +43,7 @@ def feed_parsed(parsed, feeds, manager, feed):
     if feed.save_priority == '1':
         items.reverse()
 
-    update_count = 0
+    item_count = 0
     seen_items = []
 
     # Prime previously-seen item map to avoid duplicate downloads
@@ -114,7 +114,6 @@ def feed_parsed(parsed, feeds, manager, feed):
                     if os.access(destdir, os.R_OK):
                         for e in os.listdir(destdir):
                             emd = organizer.get_metadata('%s/%s' % (destdir, e), feed)
-                            logging.debug(str(emd))
                             if metadata['z'] == emd['z']:
                                 # Match season/episode
                                 if metadata['e'] and \
@@ -137,9 +136,9 @@ def feed_parsed(parsed, feeds, manager, feed):
             d.media_type = feed.media_type
             item.download = d
             manager.add_download(d)
-            update_count += 1
 
-        if feed.queue_size > 0 and update_count >= feed.queue_size:
+        item_count += 1
+        if feed.queue_size > 0 and item_count >= feed.queue_size:
             break;
 
     # Remove old downloads

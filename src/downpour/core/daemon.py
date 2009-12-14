@@ -7,8 +7,8 @@ class Daemon:
     
     Usage: subclass the Daemon class and override the run() method
     """
-    def __init__(self, run, pidfile, user=None, group=None, umask=077, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
-        self.run = run
+    def __init__(self, launcher, pidfile=None, user=None, group=None, umask=077, stdin='/dev/null', stdout='/dev/null', stderr='/dev/null'):
+        self.launcher = launcher
         self.pidfile = pidfile
         self.stdin = stdin
         self.stdout = stdout
@@ -16,6 +16,8 @@ class Daemon:
         self.user = user
         self.group = group
         self.umask = umask
+        self.args = []
+        self.kwargs = {}
     
     def daemonize(self):
         """
@@ -27,7 +29,7 @@ class Daemon:
         if not os.access(os.path.dirname(self.pidfile), os.W_OK):
             sys.stderr.write("No write access to pidfile: %s\n" % self.pidfile)
             sys.exit(1)
-            
+
         try: 
             pid = os.fork() 
             if pid > 0:
@@ -66,6 +68,8 @@ class Daemon:
         atexit.register(self.delpid)
         pid = str(os.getpid())
         file(self.pidfile,'w+').write("%s\n" % pid)
+        if self.user:
+            os.chown(self.pidfile, pwd.getpwnam(self.user)[2], grp.getgrnam(self.group)[2])
     
     def drop_privileges(self):
         if self.user and os.getuid() == 0:
@@ -93,9 +97,13 @@ class Daemon:
             pid = None
     
         if pid:
-            message = "pidfile %s already exist. Daemon already running?\n"
-            sys.stderr.write(message % self.pidfile)
-            sys.exit(1)
+            try:
+                os.kill(pid, 0)
+                message = "pidfile %s already exist. Daemon already running?\n"
+                sys.stderr.write(message % self.pidfile)
+                sys.exit(1)
+            except OSError:
+                pass
         
         # Start the daemon
         self.daemonize()
@@ -139,3 +147,16 @@ class Daemon:
         """
         self.stop()
         self.start()
+
+    def run(self):
+        launch_class = self.get_class(self.launcher)
+        print launch_class
+        launch_class(*self.args, **self.kwargs).run()
+
+    def get_class(self, kls):
+        parts = kls.split('.')
+        module = ".".join(parts[:-1])
+        m = __import__( module )
+        for comp in parts[1:]:
+            m = getattr(m, comp)            
+        return m
