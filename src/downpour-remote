@@ -1,0 +1,128 @@
+#!/usr/bin/env python
+from downpour.remote import commands
+from downpour.download import Status
+from twisted.internet import reactor
+from twisted.internet.protocol import ClientCreator
+from twisted.protocols import amp
+from optparse import OptionParser
+import logging
+import os
+
+parser = OptionParser(add_help_option=False)
+parser.add_option("-h", "--host", default="localhost", dest="host",
+                  help="Hostname, IP address or local socket to connect to")
+parser.add_option("-p", "--password", default='', dest="password",
+                  help="Server password")
+parser.add_option("--port", default=6226, dest="port",
+                  type="int", help="Port to connect to on host")
+parser.add_option("-d", "--debug", action="store_true", dest="debug",
+                  help="Display additional log messages")
+parser.add_option("--help", action="help", help="Display this help message")
+(options, args) = parser.parse_args()
+
+# Connection handlers
+def connectSuccess(p, options, args):
+    p.callRemote(commands.Auth, password=options.password).addCallback(loginComplete, p, args).addErrback(fatalError);
+
+def loginComplete(result, p, args):
+    if not result['result']:
+        raise Exception('Login failed')
+
+    cmds = {
+        'status': (commands.Status,),
+        'download-add': (commands.DownloadAdd, 'url'),
+        'torrent-add-file': (commands.TorrentAddFile, 'data'),
+        'download-list': (commands.DownloadList,),
+        'download-info': (commands.DownloadInfo, 'id'),
+        'download-control': (commands.DownloadControl, 'id', 'action'),
+        'download-remove': (commands.DownloadRemove, 'id'),
+        'feed-add': (commands.FeedAdd, 'url', 'name', 'media_type'),
+        'feed-list': (commands.FeedList,),
+        'feed-info': (commands.FeedInfo, 'id'),
+        'feed-remove': (commands.FeedRemove, 'id'),
+    }
+
+    if len(args) == 0:
+        raise Exception('No command specified')
+    command = args.pop(0)
+    if cmds.has_key(command):
+        fields = cmds[command][1:]
+        params = dict([(fields[x], args[x]) for x in range(0, min(len(args), len(fields)))])
+        if command == 'torrent-add-file':
+            if params.has_key('data') and os.access(params['data'], os.R_OK):
+                f = open(params['data'])
+                params['data'] = f.read()
+                f.close()
+            else:
+                params.pop('data')
+        p.callRemote(cmds[command][0], **params).addCallback(commandSuccess, command, p).addErrback(fatalError)
+    else:
+        raise Exception('Invalid command')
+
+def formatSuccess(result):
+    if result:
+        return 'Ok'
+    else:
+        return 'Error'
+
+def formatStatus(result):
+    val = 'Downpour v%s on %s: ' % (result['version'], result['host'])
+    if (result['paused']):
+        val += 'paused, '
+    else:
+        val += 'running, '
+    val += 'dn=%.1f kB/s, ' % result['downloadrate']
+    val += 'up=%.1f kB/s, ' % result['uploadrate']
+    val += '%d downloads (%d active)' % (result['downloads'], result['active_downloads'])
+    return val
+
+def formatDownload(result):
+    if not result['id']:
+        raise Exception('Download not found')
+    return '%s: %s (%s, %.1f%% complete) %s' % (result['id'], result['description'], Status.descriptions[result['status']], result['progress'], result['status_message'])
+
+def formatDownloadList(result):
+    if not len(result):
+        raise Exception('No downloads found')
+    return '\n'.join([formatDownload(t) for t in result])
+
+def formatFeed(result, short=False):
+    if not result['id']:
+        raise Exception('Feed not found')
+    return '%s: %s (%s)' % (result['id'], result['name'], result['url'])
+
+def formatFeedList(result):
+    if not len(result):
+        raise Exception('No feeds found')
+    return '\n'.join([formatFeed(f) for f in result])
+
+def commandSuccess(result, command, p):
+    formatters = {
+        'status': formatStatus,
+        'download-add': formatSuccess,
+        'torrent-add-file': formatSuccess,
+        'download-list': formatDownloadList,
+        'download-info': formatDownload,
+        'download-control': formatSuccess,
+        'download-remove': formatSuccess,
+        'feed-add': formatSuccess,
+        'feed-list': formatFeedList,
+        'feed-info': formatFeed,
+        'feed-remove': formatSuccess
+    }
+    if formatters.has_key(command):
+        print formatters[command](result['result']);
+    reactor.stop()
+
+def fatalError(failure):
+    print failure.getErrorMessage()
+    failure.printTraceback()
+    reactor.stop()
+
+# Listen for manager connections)
+c = ClientCreator(reactor, amp.AMP)
+if options.host.startswith('/'):
+    c.connectUNIX(options.host).addCallback(connectSuccess, options, args).addErrback(fatalError)
+else:
+    c.connectTCP(options.host, options.port).addCallback(connectSuccess, options, args).addErrback(fatalError)
+reactor.run()

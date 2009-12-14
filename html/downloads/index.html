@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+{% set section = "downloads" %}
+{% block head %}
+	<script language="javascript">
+		function toggleAll(e, f) {
+			for (i = 0; i < f.elements.length; ++i)
+				if (f.elements[i].type == 'checkbox')
+					f.elements[i].checked = e.checked;
+		}
+	</script>
+{% endblock %}
+{% block heading %}
+	{% if status.paused %}
+		<a class="button resume" style="float: right;" href="/resume">Resume All</a>
+	{% else %}
+		<a class="button pause" style="float: right;" href="/pause">Pause All</a>
+	{% endif %}
+	<h1>{{ title }}</h1>
+{% endblock %}
+{% block body %}
+	<div style="float: left; height: 95px;" class="greenbox">
+		<form action="/downloads/add/torrent" enctype="multipart/form-data" method="post">
+			<table>
+				<tr>
+					<td width="150">Upload new torrent:</td>
+					<td>
+						<input type="file" name="torrent"/>
+						<input type="submit" value="Upload"/>
+					</td>
+				</tr>
+			</table>
+		</form>
+		<form action="/downloads/add/url" method="post">
+			<table>
+				<tr>
+					<td width="150">Download from URL:</td>
+					<td>
+						<input type="text" name="url"/>
+						<input type="submit" value="Add"/>
+					</td>
+				</tr>
+			</table>
+		</form>
+		<form action="/search" method="post">
+			<table>
+				<tr>
+					<td width="150">Find a download:</td>
+					<td>
+						<input type="text" name="query"/>
+						<input type="hidden" name="query" value="torrent"/>
+						<input type="submit" value="Search"/>
+					</td>
+				</tr>
+			</table>
+		</form>
+	</div>
+	<div style="float:right; width: 250px; height: 95px;" class="info">
+		{{ status.active_downloads }} active downloads<br />
+		{{ status.downloadrate|filesizeformat|replace('Bytes','b') }}/s download<br />
+		{{ status.uploadrate|filesizeformat|replace('Bytes','b') }}/s upload<br />
+		{{ (status.downloadrate + status.uploadrate)|filesizeformat|replace('Bytes','b') }}/s total<br />
+		{{ status.connections }} active connections
+	</div>
+	<br style="clear: right;"/>
+	{% if status.paused %}
+		<div class="warning">
+			Downpour is currently paused.<br />
+			<a href="/resume">Resume downloading</a>
+		</div>
+	{% endif %}
+
+	<table width="100%" border="0" cellspacing="0" cellpadding="0" class="totalprogress">
+		<tr>
+			<td width="70">Progress</td>
+			<td>{{ status.progress|progressbar('100%',label='complete') }}</td>
+			<td width="10">&nbsp;</td>
+			<td width="70" align="right">Storage&nbsp;&nbsp;</td>
+			<td width="235">
+				{% if status.diskfreepct < 10 %}
+					{{ status.diskfreepct|progressbar('99%',style='red',label='free') }}
+				{% elif status.diskfreepct < 30 %}
+					{{ status.diskfreepct|progressbar('99%',style='yellow',label='free') }}
+				{% else %}
+					{{ status.diskfreepct|progressbar('99%',label='free') }}
+				{% endif %}
+			</td>
+		</tr>
+	</table>
+	{% if downloads %}
+		<form action="/downloads/bulk" method="post">
+			<table width="100%" class="list" border="0" cellspacing="0" cellpadding="0">
+				<thead>
+					<td width="18">&nbsp;</td>
+					<td>Download</td>
+					<td align="right">Size</td>
+					<td align="center">Status</td>
+					<td align="center">Progress</td>
+					<td align="center">Down</td>
+					<td align="center">Up</td>
+					<td align="center">Time Left</td>
+					<td width="75" align="right">
+						<input type="checkbox" onclick="toggleAll(this, this.form)"/>
+					</td>
+				</thead>
+				<tbody>
+				{% for dl in downloads %}
+					{% set client = clientFactory(dl.id) %}
+					<tr class="{{ loop.cycle('odd', 'even') }}">
+						<td align="center">
+							{% if client.is_running() %}
+								{{ dl.health|healthmeter }}
+							{% else %}
+								&nbsp;
+							{% endif %}
+						</td>
+						<td><a href="/downloads/{{ dl.id }}">{{ dl.description }}</a></td>
+						<td align="right" class="nowrap">
+							{% if dl.size %}
+								{{ dl.size|filesizeformat|replace('Bytes','b') }}
+							{% else %}
+								Unknown
+							{% endif %}
+						</td>
+						<td align="center" class="nowrap">
+							{% if dl.status_message %}
+								<a class="status_{{ statusdesc[dl.status]|lower }}" href="/downloads/{{ dl.id }}"
+									title="{{ dl.status_message }}">
+							{% endif %}
+							{{ statusdesc[dl.status] }}
+							{% if dl.status_message %}
+								</a>
+								<a href="/downloads/{{ dl.id }}" title="{{ dl.status_message }}">
+									<img src="/media/images/info-small.png"/></a>
+							{% endif %}
+						</td>
+						<td align="center" class="nowrap">
+							{% if dl.status == statuscode.SEEDING %}
+								{{ dl.seed_progress|progressbar(style='blue') }}
+							{% elif dl.status == statuscode.FAILED %}
+								{{ dl.progress|progressbar(style='red') }}
+							{% else %}
+								{{ dl.progress|progressbar }}
+							{% endif %}
+							</div>
+						</td>
+						<td align="center" class="nowrap">
+							{% if client.is_running() %}
+								{{ dl.downloadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
+							{% endif %}
+						</td>
+						<td align="center" class="nowrap">
+							{% if client.is_running() and client.can_upload() %}
+								{{ dl.downloadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
+							{% endif %}
+						</td>
+						<td align="center" class="nowrap">
+							{% if client.is_running() %}
+								{{ dl.timeleft|intervalformat }}
+							{% else %}
+								&nbsp;
+							{% endif %}
+							
+						</td>
+						<td align="right" class="nowrap">
+							{% if client.is_startable() %}
+								{% if client.is_finished() %}
+									<a href="/downloads/{{ dl.id }}/start"><img title="Seed download" src="/media/images/seed.png"/></a>
+								{% else %}
+									<a href="/downloads/{{ dl.id }}/start"><img title="Start download" src="/media/images/start.png"/></a>
+								{% endif %}
+							{% endif %}
+							{% if client.is_stoppable() %}
+								<a href="/downloads/{{ dl.id }}/stop"><img title="Stop download" src="/media/images/stop.png"/></a>
+							{% endif %}
+							<a onclick="return confirm('Are you sure you want to remove this download?')" href="/downloads/{{ dl.id }}/delete"><img title="Delete download" src="/media/images/delete.png"/></a>
+							<input type="checkbox" name="id" value="{{ dl.id }}"/>
+						</td>
+					</tr>
+				{% endfor %}
+				</tbody>
+			</table>
+			<div style="float: left;">
+				<img src="/media/images/error-small.png"/>
+				<a href="/downloads/cleanup"><b>Remove all imported downloads</b></a>
+			</div>
+			<div style="float: right;">
+				<b>With selected:</b>
+				<select size="1" name="action">
+					<option value="start">Start</option>
+					<option value="stop">Stop</option>
+					<option value="restart">Restart</option>
+					<option value="remove">Remove</option>
+				</select>
+				<input type="submit" value="Go"/>
+			</div>
+		</form>
+	{% else %}
+		<p>There are no downloads in the queue.</p.
+	{% endif %}
+{% endblock %}

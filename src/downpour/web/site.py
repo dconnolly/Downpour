@@ -1,0 +1,47 @@
+from downpour.web import common, account, downloads, feeds, search, settings
+from downpour.web import status, browse, libraries, users
+from twisted.web import static, server
+
+class SiteRoot(common.Resource):
+
+    def __init__(self, templatedir, app):
+        common.Resource.__init__(self)
+        self.putChild('', self)
+        self.putChild('resume', Resume())
+        self.putChild('pause', Pause())
+        self.putChild('account', account.Root())
+        self.putChild('browse', browse.Root())
+        self.putChild('downloads', downloads.Root())
+        self.putChild('feeds', feeds.Root())
+        self.putChild('libraries', libraries.Root())
+        self.putChild('media', static.File(templatedir + '/media'))
+        self.putChild('search', search.Root())
+        self.putChild('settings', settings.Root())
+        self.putChild('status', status.Root())
+        self.putChild('users', users.Root())
+    
+    def render_GET(self, request):
+        if self.is_logged_in(request):
+            request.redirect('/downloads/')
+        else:
+            request.redirect('/status/')
+        request.finish()
+        return server.NOT_DONE_YET
+
+class Pause(common.AuthenticatedResource):
+
+    def render_GET(self, request):
+        def finish(result):
+            request.redirect('/')
+            request.finish()
+        request.application.pause().addCallback(finish)
+        return server.NOT_DONE_YET
+
+class Resume(common.AuthenticatedResource):
+
+    def render_GET(self, request):
+        def finish(result):
+            request.redirect('/')
+            request.finish()
+        request.application.resume().addCallback(finish)
+        return server.NOT_DONE_YET

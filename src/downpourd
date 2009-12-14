@@ -1,0 +1,45 @@
+#!/usr/bin/env python
+from downpour.core.application import Application
+from downpour.core.daemon import Daemon
+from optparse import OptionParser
+import logging
+import os
+
+parser = OptionParser()
+parser.add_option("-c", "--config", default="/etc/downpour.cfg",
+                    dest="config", help="Configuration file")
+parser.add_option("-a", "--address", dest="interface",
+                    help="Name or IP address to listen on")
+parser.add_option("-p", "--port", dest="port", type="int",
+                    help="Port to listen on")
+parser.add_option("--pid-file", default="/var/run/downpour.pid", dest="pidfile",
+                    help="File to write daemon's PID to")
+parser.add_option("-u", "--user", dest="user", help="User to run as")
+parser.add_option("-g", "--group", dest="group", help="Group to run as")
+parser.add_option("--umask", default=077, dest="umask", type="int",
+                    help="File creation mask")
+parser.add_option("-d", "--debug", action="store_true", dest="debug",
+                    help="Don't detach, and display all output to STDOUT/STDERR")
+(options, args) = parser.parse_args()
+optdict = options.__dict__
+
+def downpour_launcher(options):
+    a = Application(options)
+    def launcher():
+        a.run()
+    return launcher
+
+if options.debug:
+    optdict['log'] = logging.DEBUG
+    downpour_launcher(optdict)()
+else:
+    d = Daemon(downpour_launcher(optdict), options.pidfile, user=options.user, group=options.group)
+    actions = {
+        'start': d.start,
+        'stop': d.stop,
+        'restart': d.restart
+    }
+    if (len(args) and actions[args[0]]):
+        actions[args[0]]()
+    else:
+        print "Valid actions: start|stop|restart"
