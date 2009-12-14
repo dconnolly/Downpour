@@ -27,6 +27,11 @@ media_mimetypes = {
     'image/other': ['image/']
 }
 
+extra_mimetypes = {
+    'mkv': 'video/x-matroska',
+    'mka': 'audio/x-matroska',
+}
+
 match_patterns = {
     'audio/music': [
         # Artist - Album/Number - Track Name.ext
@@ -197,6 +202,10 @@ def import_files(download, manager, library, firstRun=True):
         # Skip unrecognized media files
         if not library.keepall:
             mimetype = mimetypes.guess_type(file.filename)[0]
+            if not mimetype and file.filename.rfind('.') > -1:
+                ext = file.filename[file.filename.rfind('.') + 1:]
+                if ext in extra_mimetypes:
+                    mimetype = extra_mimetypes[ext]
             matches = sum([1 for m in media_mimetypes[download.media_type] \
                     if mimetype.startswith(m)])
             if matches == 0:
@@ -212,7 +221,6 @@ def import_files(download, manager, library, firstRun=True):
         # Map filename to desired renaming pattern
         metadata = get_metadata(file.original_filename, download, fullpath)
         dest = pattern_replace(library.pattern, metadata)
-        print dest
         if dest:
             while dest.find('//') > -1:
                 dest = dest.replace('//', '/')
