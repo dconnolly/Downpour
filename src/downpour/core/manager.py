@@ -120,6 +120,7 @@ class Manager:
             logging.debug(u'Pausing download %s (%s)' % (d.id, d.description))
             dfr = defer.maybeDeferred(dc.pause)
             dfr.addCallback(self.update_status, d, Status.STOPPED)
+            dfr.addErrback(self.update_status, d, Status.STOPPED)
         else:
             dfr = defer.succeed(True)
         self.store.commit()
@@ -290,6 +291,7 @@ class Manager:
             logging.debug(u'Stopping download %s (%s)' % (d.id, d.description))
             dfr = defer.maybeDeferred(dc.stop)
             dfr.addCallback(self.update_status, d, Status.STOPPED)
+            dfr.addErrback(self.update_status, d, Status.STOPPED)
         else:
             dfr = defer.succeed(False)
         self.store.commit()
@@ -301,10 +303,10 @@ class Manager:
             self.paused = True
             dl = [self.pause_download(d.id) for d in self.get_downloads() if d.active]
             self.store.commit()
-            return defer.DeferredList(dl)
+            return defer.DeferredList(dl, consumeErrors=True)
         return defer.DeferredList([defer.succeed(False)])
 
-    def update_status(self, success, d, status, message=None):
+    def update_status(self, result, d, status, message=None):
         if status == Status.STOPPED and d.progress == 100:
             status = Status.COMPLETED
         d.status = status
@@ -318,14 +320,12 @@ class Manager:
             dl = [self.resume_download(d.id) \
                 for d in self.get_downloads() if d.active]
             self.auto_queue()
-            return defer.DeferredList(dl)
+            return defer.DeferredList(dl, consumeErrors=True)
         return defer.DeferredList([defer.succeed(False)])
 
     def add_feed(self, f):
-        f.update_frequency = 60
         self.store.add(f)
         self.store.commit()
-        threads.deferToThread(feedparser.parse, str(f.url)).addCallback(self.check_feed_success, f).addErrback(self.check_feed_failure, f)
         logging.debug(u'Added new feed ' + f.url)
         return f.id
 
@@ -472,3 +472,13 @@ class UserManager(Manager):
             os.mkdir(userdir)
         return userdir
 
+    def get_full_path(self, path, media_type=None):
+        parts = [self.get_library_directory()]
+        if media_type:
+            libraries = self.get_libraries()
+            for l in libraries:
+                if l.media_type == media_type:
+                    parts.append(l.directory)
+                    break
+        parts.append(path)
+        return os.path.expanduser('/'.join(parts))

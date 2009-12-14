@@ -110,11 +110,15 @@ class Bulk(common.AuthenticatedResource):
     def render_POST(self, request):
         manager = self.get_manager(request)
         postrun = None
+
         def finish(result):
             if postrun:
                 postrun()
             request.redirect('/downloads')
             request.finish()
+
+        def startall():
+            [manager.start_download(int(id)) for id in ids]
 
         if 'id' in request.args and 'action' in request.args:
             action = request.args['action'][0]
@@ -122,20 +126,17 @@ class Bulk(common.AuthenticatedResource):
             dl = []
 
             if action == 'start':
-                # Don't assign to dl, don't need to wait
-                [manager.start_download(int(id)) for id in ids]
+                startall()
             elif action == 'stop':
                 dl = [manager.stop_download(int(id)) for id in ids]
             elif action == 'restart':
                 dl = [manager.stop_download(int(id)) for id in ids]
-                def startall():
-                    [manager.start_download(int(id)) for id in ids]
                 postrun = startall
             elif action == 'remove':
                 dl = [manager.remove_download(int(id)) for id in ids]
 
             if len(dl):
-                dfl = defer.DeferredList(dl)
+                dfl = defer.DeferredList(dl, consumeErrors=True)
                 dfl.addCallback(finish)
             else:
                 finish(None)
@@ -226,6 +227,7 @@ class Restart(common.AuthenticatedResource):
                 request.redirect('/downloads')
             request.finish()
         dfr.addCallback(finish)
+        dfr.addErrback(finish)
         return server.NOT_DONE_YET
 
 class Stop(common.AuthenticatedResource):
@@ -244,6 +246,7 @@ class Stop(common.AuthenticatedResource):
                 request.redirect('/downloads')
             request.finish()
         dfr.addCallback(finish)
+        dfr.addErrback(finish)
         return server.NOT_DONE_YET
 
 class Update(common.AuthenticatedResource):
@@ -284,4 +287,5 @@ class Delete(common.AuthenticatedResource):
             request.redirect('/downloads')
             request.finish()
         dfr.addCallback(finish)
+        dfr.addErrback(finish)
         return server.NOT_DONE_YET

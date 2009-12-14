@@ -1,6 +1,6 @@
 from twisted.internet import defer
 from twisted.protocols.htb import HierarchicalBucketFilter
-import tempfile, os, logging
+import tempfile, os, logging, shutil
 
 class Status:
     NONE = 0
@@ -75,9 +75,6 @@ class DownloadClient:
 
         if not os.path.exists(directory):
             os.makedirs(directory)
-        else:
-            for file in os.listdir(directory):
-                shutil.rmtree('%s/%s' % (directory, file))
         if not os.access(directory, os.R_OK):
             raise OSError('Could not write to download directory %s' % directory)
 

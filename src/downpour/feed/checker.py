@@ -44,6 +44,14 @@ def feed_parsed(parsed, feeds, manager, feed):
         items.reverse()
 
     update_count = 0
+    seen_items = []
+
+    # Prime previously-seen item map to avoid duplicate downloads
+    pastitems = manager.store.find(models.FeedItem,
+        models.FeedItem.feed_id == feed.id)
+    for pi in pastitems:
+        md = organizer.get_metadata(os.path.basename(pi.link), feed)
+        seen_items.append({'d': md['d'], 'e': md['e'], 's': md['s']})
 
     for e in items:
         do_update = False
@@ -82,34 +90,43 @@ def feed_parsed(parsed, feeds, manager, feed):
         if do_update:
             # Check existing library for matching episode
             filename = os.path.basename(item.link)
-            pattern = feed.rename_pattern
-            if not pattern:
-                lib = manager.get_library(media_type=feed.media_type)
-                if lib:
-                    pattern = lib.pattern
-            if not pattern:
-                pattern = '%p'
             metadata = organizer.get_metadata(filename, feed)
-            destfile = organizer.pattern_replace(pattern, metadata)
-            if os.access(destfile, os.R_OK):
+            if seen(metadata, seen_items):
+                # Prevent downloading duplicate items
                 do_update = False
-            elif metadata['z'] and (metadata['e'] or metadata['d']):
-                destdir = os.path.dirname(destfile)
-                if os.access(destdir, os.R_OK):
-                    for e in os.listdir(destdir):
-                        emd = organizer.get_metadata('%s/%s' % (destdir, e), feed)
-                        if metadata['z'] == emd['z']:
-                            # Match season/episode
-                            if metadata['e'] and \
-                                    metadata['e'] == emd['e'] and \
-                                    metadata['s'] == emd['s']:
-                                do_update = False
-                                break
-                            # Match date
-                            elif metadata['d'] and \
-                                    metadata['d'] == emd['d']:
-                                do_update = False
-                                break
+            else:
+                seen_items.append({'d': metadata['d'],
+                                   'e': metadata['e'],
+                                   's': metadata['s']})
+                pattern = feed.rename_pattern
+                if not pattern:
+                    lib = manager.get_library(media_type=feed.media_type)
+                    if lib:
+                        pattern = lib.pattern
+                if not pattern:
+                    pattern = '%p'
+                destfile = organizer.pattern_replace(pattern, metadata)
+                if os.access(destfile, os.R_OK):
+                    do_update = False
+                elif metadata['z'] and (metadata['e'] or metadata['d']):
+                    destdir = manager.get_full_path(os.path.dirname(destfile),
+                        feed.media_type)
+                    if os.access(destdir, os.R_OK):
+                        for e in os.listdir(destdir):
+                            emd = organizer.get_metadata('%s/%s' % (destdir, e), feed)
+                            logging.debug(str(emd))
+                            if metadata['z'] == emd['z']:
+                                # Match season/episode
+                                if metadata['e'] and \
+                                        metadata['e'] == emd['e'] and \
+                                        metadata['s'] == emd['s']:
+                                    do_update = False
+                                    break
+                                # Match date
+                                elif metadata['d'] and \
+                                        metadata['d'] == emd['d']:
+                                    do_update = False
+                                    break
 
         if do_update:
             d = models.Download()
@@ -150,8 +167,17 @@ def feed_parsed(parsed, feeds, manager, feed):
     if len(feeds):
         update_feeds(feeds, manager)
 
+def seen(m, items):
+    for i in items:
+        if m['e']:
+            if m['e'] == i['e'] and m['s'] == i['s']:
+                return True
+        elif m['d']:
+            if m['d'] == i['d']:
+                return True
+    return False
+
 def feed_parse_failed(failure, feeds, manager, feed):
-    print failure
     feed.last_update = time()
     feed.last_error = unicode(failure.getErrorMessage())
     manager.store.commit()

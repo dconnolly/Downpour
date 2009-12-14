@@ -1,6 +1,6 @@
 from downpour.core import VERSION
 from downpour.download import *
-from twisted.internet import defer, task
+from twisted.internet import defer, task, reactor
 from twisted.web import client
 from twisted.python import failure
 import libtorrent as lt
@@ -195,7 +195,11 @@ class LibtorrentClient(DownloadClient):
             self.dfm['torrent_paused_alert'] = defer.Deferred()
             self.dfm['save_resume_data_alert'] = defer.Deferred()
             dl = defer.DeferredList((self.dfm['torrent_paused_alert'],
-                                    self.dfm['save_resume_data_alert']))
+                                    self.dfm['save_resume_data_alert']),
+                                    consumeErrors=True)
+            # Call errback if it doesn't complete in a timely fashion
+            reactor.callLater(5.0, self.handle_timeout, 'torrent_paused_alert')
+            reactor.callLater(5.0, self.handle_timeout, 'save_resume_data_alert')
             if self.torrent:
                 self.torrent.auto_managed(False)
                 self.torrent.pause()
@@ -203,6 +207,11 @@ class LibtorrentClient(DownloadClient):
             return dl
         else:
             return defer.succeed(True)
+
+    def handle_timeout(self, alert_type):
+        if alert_type in self.dfm:
+            self.dfm[alert_type].errback(failure.Failure(defer.TimeoutError(alert_type)))
+            del self.dfm[alert_type]
 
     def handle_alert(self, alert, alert_type):
         # print("TORRENT: %s: %s" % (alert_type, alert.message()))
@@ -216,19 +225,12 @@ class LibtorrentClient(DownloadClient):
             if alert.handle.is_valid():
                 error = alert.handle.status().error
                 if error:
+                    self.torrent.auto_managed(False)
+                    self.download.active = False
                     self.download.status = Status.FAILED
                     self.download.status_message = error
-                    self.torrent.auto_managed(False)
                     self.errback(failure.Failure(Exception(error)))
-                elif self.download.progress == 100:
-                    self.download.status = Status.COMPLETED
-                    #self.download.status_message = None
-                else:
-                    self.download.status = Status.STOPPED
-                    self.download.status_message = None
-            else:
-                self.download.status = Status.STOPPED
-                self.download.status_message = None
+            self.update_status()
         elif alert_type == 'save_resume_data_alert':
             self.download.resume_data = marshal.dumps(alert.resume_data)
         elif alert_type == 'save_resume_data_failed_alert':
@@ -236,10 +238,7 @@ class LibtorrentClient(DownloadClient):
         elif alert_type == 'state_changed_alert':
             self.update_status()
         elif alert_type == 'tracker_error_alert':
-            self.download.status = Status.FAILED
-            self.download.status_message = u'Could not connect to tracker'
-            self.download.active = False
-            self.stop()
+            self.update_status()
 
         if alert_type in self.dfm:
             self.dfm[alert_type].callback(self)
@@ -310,6 +309,7 @@ class LibtorrentClient(DownloadClient):
             self.download.elapsed = status.active_time
             self.download.connections = status.num_connections
             self.download.progress = status.progress * 100
+            self.download.status_message = unicode(status.error)
 
             if self.download.downloaded > 0:
                 ulratio = float(self.manager.get_setting('upload_ratio', 0))

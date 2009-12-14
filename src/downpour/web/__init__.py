@@ -87,7 +87,7 @@ class WebInterfacePlugin(Plugin):
     def workinglink(self, file, download):
         realpath = self.application.manager.get_work_directory(download) + '/' + file
         if os.access(realpath, os.R_OK):
-            return '<a target="_blank" href="/browse/work/%d/%s">%s</a>' % (download.id, file, file)
+            return '<a target="_blank" href="/work/dldir%d/%s">%s</a>' % (download.id, file, file)
         else:
             return file
 

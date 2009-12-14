@@ -1,5 +1,5 @@
 from downpour.web import common, account, downloads, feeds, search, settings
-from downpour.web import status, browse, libraries, users
+from downpour.web import status, browse, libraries, users, work
 from twisted.web import static, server
 
 class SiteRoot(common.Resource):
@@ -19,6 +19,7 @@ class SiteRoot(common.Resource):
         self.putChild('settings', settings.Root())
         self.putChild('status', status.Root())
         self.putChild('users', users.Root())
+        self.putChild('work', work.Root())
     
     def render_GET(self, request):
         if self.is_logged_in(request):
