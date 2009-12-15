@@ -9,13 +9,12 @@ DEPENDENCIES (tested version):
 	- python-feedparser (4.1)
 	- python-dateutil (1.4.1)
 
-QUICK INSTALL:
+QUICK INSTALL (Linux/Unix/BSD):
 
-	1.	Copy src/downpour into PYTHON_PATH
-
-	2.	Copy src/downpourd into /usr/bin (or /usr/local/bin)
-
-	3.	Copy cfg/downpour.cfg into /etc and customize it
+	1.	Copy src/downpour somewhere in your PYTHONPATH
+	2.	Copy src/downpourd to /usr/bin/downpourd
+	3.	Copy cfg/downpour.cfg to /etc/downpour.cfg and customize it
+	4.	Copy html to /usr/share/downpour/html
 
 STARTING DOWNPOUR:
 
@@ -61,3 +60,8 @@ DEBUGGING DOWNPOUR:
 		downpourd -c [config-file] -d
 	
 	This is currently the only way to run Downpour on Windows.
+
+HACKING ON DOWNPOUR:
+
+	Edit the code in src/downpour.  You can immediately view your
+	changes by running ./downpour-debug.sh in the current directory.
