@@ -221,40 +221,37 @@ class Detail(common.AuthenticatedResource):
         self.id = id
 
     def getChild(self, path, request):
-        manager = self.get_manager(request)
-        if manager:
-            self.download = manager.store.find(models.Download,
-                model.Download.id == self.id,
-                model.Download.user_id == self.get_user(request).id).one()
-            print self.download
         if (path == ''):
             return self
-        if self.download:
+        manager = self.get_manager(request)
+        if manager:
+            download = manager.get_download(self.id)
             if (path == 'start'):
-                return Start(self.download)
+                return Start(download)
             elif (path == 'restart'):
-                return Restart(self.download)
+                return Restart(download)
             elif (path == 'stop'):
-                return Stop(self.download)
+                return Stop(download)
             elif (path == 'update'):
-                return Update(self.download)
+                return Update(download)
             elif (path == 'delete'):
-                return Delete(self.download)
+                return Delete(download)
         else:
             return self
 
     def render_GET(self, request):
         manager = self.get_manager(request)
+        dl = manager.get_download(self.id)
         store = request.application.get_store()
         user = self.get_user(request)
         libs = store.find(models.Library, models.Library.user_id == user.id)
-        if self.download.mime_type:
-            template = 'downloads/detail_%s.html' % self.download.mime_type.replace('/', '_')
+        if dl.mime_type:
+            template = 'downloads/detail_%s.html' % dl.mime_type.replace('/', '_')
         else:
             template = 'downloads/detail.html'
-        downloadClient = manager.get_download_client(self.download.id, True)
-        context = {'title': self.download.description,
-                   'download': self.download,
+        downloadClient = manager.get_download_client(dl.id, True)
+        context = {'title': dl.description,
+                   'download': dl,
                    'libraries': organizer.get_media_libraries(libs),
                    'mediatypes': organizer.get_media_types(),
                    'client': downloadClient,
