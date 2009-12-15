@@ -2,11 +2,124 @@
 {% set section = "downloads" %}
 {% block head %}
 	<script language="javascript">
+
 		function toggleAll(e, f) {
 			for (i = 0; i < f.elements.length; ++i)
 				if (f.elements[i].type == 'checkbox')
 					f.elements[i].checked = e.checked;
 		}
+
+		function updateTable() {
+			ajax = new AJAX();
+			ajax.getJSON('/downloads/statusjs', statusResponse);
+		}
+
+		function statusResponse(data) {
+			document.getElementById('status_active_downloads').innerHTML =
+				data.status['active_downloads'];
+			document.getElementById('status_downloadrate').innerHTML =
+				data.status['downloadrate'];
+			document.getElementById('status_uploadrate').innerHTML =
+				data.status['uploadrate'];
+			document.getElementById('status_totalrate').innerHTML =
+				data.status['totalrate'];
+			document.getElementById('status_connections').innerHTML =
+				data.status['connections'];
+			setProgress(document.getElementById('totalprogress'),
+				data.status.progress, ' complete');
+			setProgress(document.getElementById('diskspace'),
+				data.status.diskfreepct, ' (' + data.status.diskfree + ') free');
+
+			for (var i = 0; i < data.downloads.length; ++i) {
+				dl = data.downloads[i];
+				prefix = 'download' + dl.id + '_';
+				document.getElementById(prefix + 'description').innerHTML =
+					'<a href="/downloads/' + dl.id + '/">' + dl.description + '</a>';
+				document.getElementById(prefix + 'size').innerHTML = dl.size;
+				if (dl.status_message) {
+					document.getElementById(prefix + 'status').innerHTML =
+						'<a class="status_' + dl.status.toLowerCase() +
+						'" href="/downloads/' + dl.id + '" title="' +
+						dl.status_message + '">';
+				} else {
+					document.getElementById(prefix + 'status').innerHTML = dl.status;
+				}
+				style = null;
+				if (dl.status == 'Seeding')
+					style= 'blue';
+				else if (dl.status == 'Failed')
+					style= 'red';
+				setProgress(document.getElementById(prefix + 'progress'),
+					dl.progress, '', style)
+				if (dl.running) {
+					setHealth(document.getElementById(prefix + 'health'), dl.health);
+					document.getElementById(prefix + 'dlrate').innerHTML = dl.downloadrate;
+					document.getElementById(prefix + 'ulrate').innerHTML = dl.uploadrate;
+					document.getElementById(prefix + 'timeleft').innerHTML = dl.timeleft;
+				} else {
+					document.getElementById(prefix + 'health').innerHTML = '&nbsp;';
+					document.getElementById(prefix + 'dlrate').innerHTML = '&nbsp;';
+					document.getElementById(prefix + 'ulrate').innerHTML = '&nbsp;';
+					document.getElementById(prefix + 'timeleft').innerHTML = '&nbsp;';
+				}
+				// TODO set actions
+				actionhtml = '';
+				if (dl.startable) {
+					if (dl.finished)
+						actionhtml += '<a href="/downloads/' + dl.id +
+							'/start"><img title="Seed download" ' +
+							'src="/media/images/seed.png"/></a>';
+					else
+						actionhtml += '<a href="/downloads/' + dl.id +
+							'/start"><img title="Start download" ' +
+							'src="/media/images/start.png"/></a>';
+				}
+				if (dl.stoppable)
+					actionhtml += '<a href="/downloads/' + dl.id +
+						'/stop"><img title="Stop download" ' +
+						'src="/media/images/stop.png"/></a>';
+				document.getElementById(prefix + 'actions').innerHTML = actionhtml;
+			}
+		}
+
+		function setProgress(bar, pct, suffix, className) {
+			children = findElementsByClassName('progress', bar);
+			if (children.length) {
+				progressbar = children[0];
+				progressbar.style.width = Math.ceil(pct) + '%';
+				progresslabel = findElementsByClassName('label', bar)[0];
+				progresslabel.innerHTML = pct.toFixed(1) + '%' + suffix
+				if (className) {
+					removeClass(progressbar, 'red');
+					removeClass(progressbar, 'blue');
+					addClass(progressbar, className);
+				}
+			}
+		}
+
+		function setHealth(bar, pct) {
+			style = '';
+			if (pct < 25) style = 'red';
+			else if (pct < 50) style = 'yellow';
+			else style = 'green';
+			height = Math.ceil((pct/100)*16) + 'px';
+
+			children = findElementsByClassName('healthmeter', bar);
+			if (children.length) {
+				healthmeter = children[0];
+				healthmeter.className = 'healthmeter ' + style;
+				healthbar = findElementsByClassName('health', healthmeter)[0];
+				healthbar.style.height = height;
+				healthbar.className = 'health ' + style;
+			} else {
+				bar.innerHTML = '<div class="healthmeter ' + style +
+					'" style="height: ' + height + ';">' + '<div class="health '
+					+ style + '" style="height: 16px;"></div></div>';
+			}
+		}
+
+		addEvent(window, 'load', function() { setInterval(updateTable, 5000); });
+
 	</script>
 {% endblock %}
 {% block heading %}
@@ -55,11 +168,11 @@
 		</form>
 	</div>
 	<div style="float:right; width: 250px; height: 95px;" class="info">
-		{{ status.active_downloads }} active downloads<br />
-		{{ status.downloadrate|filesizeformat|replace('Bytes','b') }}/s download<br />
-		{{ status.uploadrate|filesizeformat|replace('Bytes','b') }}/s upload<br />
-		{{ (status.downloadrate + status.uploadrate)|filesizeformat|replace('Bytes','b') }}/s total<br />
-		{{ status.connections }} active connections
+		<span id="status_active_downloads">{{ status.active_downloads }}</span> active downloads<br />
+		<span id="status_downloadrate">{{ status.downloadrate|filesizeformat|replace('Bytes','b') }}/s</span> download<br />
+		<span id="status_uploadrate">{{ status.uploadrate|filesizeformat|replace('Bytes','b') }}/s</span> upload<br />
+		<span id="status_totalrate">{{ (status.downloadrate + status.uploadrate)|filesizeformat|replace('Bytes','b') }}/s</span> total<br />
+		<span id="status_connections">{{ status.connections }}</span> active connections
 	</div>
 	<br style="clear: right;"/>
 	{% if status.paused %}
@@ -72,10 +185,10 @@
 	<table width="100%" border="0" cellspacing="0" cellpadding="0" class="totalprogress">
 		<tr>
 			<td width="70">Progress</td>
-			<td>{{ status.progress|progressbar('100%',label='complete') }}</td>
+			<td id="totalprogress">{{ status.progress|progressbar('100%',label='complete') }}</td>
 			<td width="10">&nbsp;</td>
 			<td width="70" align="right">Storage&nbsp;&nbsp;</td>
-			<td width="235">
+			<td width="235" id="diskspace">
 				{% set label = '(' + status.diskfree|filesizeformat + ') free' %}
 				{% if status.diskfreepct < 10 %}
 					{{ status.diskfreepct|progressbar('99%',style='red',label=label) }}
@@ -91,38 +204,40 @@
 		<form action="/downloads/bulk" method="post">
 			<table width="100%" class="list" border="0" cellspacing="0" cellpadding="0">
 				<thead>
-					<td width="18">&nbsp;</td>
-					<td>Download</td>
-					<td align="right">Size</td>
-					<td align="center">Status</td>
-					<td align="center">Progress</td>
-					<td align="center">Down</td>
-					<td align="center">Up</td>
-					<td align="center">Time Left</td>
-					<td width="75" align="right">
-						<input type="checkbox" onclick="toggleAll(this, this.form)"/>
-					</td>
+					<tr>
+						<td width="18">&nbsp;</td>
+						<td>Download</td>
+						<td align="right">Size</td>
+						<td align="center">Status</td>
+						<td align="center">Progress</td>
+						<td align="center">Down</td>
+						<td align="center">Up</td>
+						<td align="center">Time Left</td>
+						<td width="75" align="right">
+							<input type="checkbox" onclick="toggleAll(this, this.form)"/>
+						</td>
+					</tr>
 				</thead>
 				<tbody>
 				{% for dl in downloads %}
 					{% set client = clientFactory(dl.id) %}
-					<tr class="{{ loop.cycle('odd', 'even') }}">
-						<td align="center">
+					<tr id="download{{ dl.id }}" class="{{ loop.cycle('odd', 'even') }}">
+						<td id="download{{ dl.id }}_health" align="center">
 							{% if client.is_running() %}
 								{{ dl.health|healthmeter }}
 							{% else %}
 								&nbsp;
 							{% endif %}
 						</td>
-						<td><a href="/downloads/{{ dl.id }}">{{ dl.description }}</a></td>
-						<td align="right" class="nowrap">
+						<td id="download{{ dl.id }}_description"><a href="/downloads/{{ dl.id }}">{{ dl.description }}</a></td>
+						<td id="download{{ dl.id }}_size" align="right" class="nowrap">
 							{% if dl.size %}
 								{{ dl.size|filesizeformat|replace('Bytes','b') }}
 							{% else %}
 								Unknown
 							{% endif %}
 						</td>
-						<td align="center" class="nowrap">
+						<td id="download{{ dl.id }}_status" align="center" class="nowrap">
 							{% if dl.status_message %}
 								<a class="status_{{ statusdesc[dl.status]|lower }}" href="/downloads/{{ dl.id }}"
 									title="{{ dl.status_message }}">
@@ -134,7 +249,7 @@
 									<img src="/media/images/info-small.png"/></a>
 							{% endif %}
 						</td>
-						<td align="center" class="nowrap">
+						<td id="download{{ dl.id }}_progress" align="center" class="nowrap">
 							{% if dl.status == statuscode.SEEDING %}
 								{{ dl.seed_progress|progressbar(style='blue') }}
 							{% elif dl.status == statuscode.FAILED %}
@@ -144,35 +259,36 @@
 							{% endif %}
 							</div>
 						</td>
-						<td align="center" class="nowrap">
+						<td id="download{{ dl.id }}_dlrate" align="center" class="nowrap">
 							{% if client.is_running() %}
 								{{ dl.downloadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
 							{% endif %}
 						</td>
-						<td align="center" class="nowrap">
+						<td id="download{{ dl.id }}_ulrate" align="center" class="nowrap">
 							{% if client.is_running() and client.can_upload() %}
 								{{ dl.uploadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
 							{% endif %}
 						</td>
-						<td align="center" class="nowrap">
+						<td id="download{{ dl.id }}_timeleft" align="center" class="nowrap">
 							{% if client.is_running() %}
 								{{ dl.timeleft|intervalformat }}
 							{% else %}
 								&nbsp;
 							{% endif %}
-							
 						</td>
 						<td align="right" class="nowrap">
-							{% if client.is_startable() %}
-								{% if client.is_finished() %}
-									<a href="/downloads/{{ dl.id }}/start"><img title="Seed download" src="/media/images/seed.png"/></a>
-								{% else %}
-									<a href="/downloads/{{ dl.id }}/start"><img title="Start download" src="/media/images/start.png"/></a>
+							<span id="download{{ dl.id }}_actions">
+								{% if client.is_startable() %}
+									{% if client.is_finished() %}
+										<a href="/downloads/{{ dl.id }}/start"><img title="Seed download" src="/media/images/seed.png"/></a>
+									{% else %}
+										<a href="/downloads/{{ dl.id }}/start"><img title="Start download" src="/media/images/start.png"/></a>
+									{% endif %}
 								{% endif %}
-							{% endif %}
-							{% if client.is_stoppable() %}
-								<a href="/downloads/{{ dl.id }}/stop"><img title="Stop download" src="/media/images/stop.png"/></a>
-							{% endif %}
+								{% if client.is_stoppable() %}
+									<a href="/downloads/{{ dl.id }}/stop"><img title="Stop download" src="/media/images/stop.png"/></a>
+								{% endif %}
+							</span>
 							<a onclick="return confirm('Are you sure you want to remove this download?')" href="/downloads/{{ dl.id }}/delete"><img title="Delete download" src="/media/images/delete.png"/></a>
 							<input type="checkbox" name="id" value="{{ dl.id }}"/>
 						</td>
