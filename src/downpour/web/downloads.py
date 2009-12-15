@@ -10,6 +10,7 @@ class Root(common.AuthenticatedResource):
     def __init__(self):
         common.AuthenticatedResource.__init__(self)
         self.putChild('', self)
+        self.putChild('statusjs', StatusJS())
         self.putChild('add', Add())
         self.putChild('cleanup', Cleanup())
         self.putChild('bulk', Bulk())
@@ -30,6 +31,18 @@ class Root(common.AuthenticatedResource):
                    'statusdesc': download.Status.descriptions
                    }
         return self.render_template('downloads/index.html', request, context)
+
+class StatusJS(common.AuthenticatedResource):
+
+    def render_GET(self, request):
+        manager = self.get_manager(request)
+        context = {'status': manager.get_status(),
+                   'downloads': manager.get_downloads(),
+                   'clientFactory': lambda id: manager.get_download_client(id, True),
+                   'statuscode': download.Status,
+                   'statusdesc': download.Status.descriptions
+                   }
+        return self.render_template('downloads/status-js.html', request, context)
 
 class Add(common.AuthenticatedResource):
 
