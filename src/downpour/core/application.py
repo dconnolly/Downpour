@@ -221,14 +221,14 @@ class Application:
         return self.get_state(u'paused', u'0') == u'1'
 
     def run(self):
-        # Drop privileges; shouldn't need to run on privileged ports
-        self.drop_privileges()
-
         # Initialize plugins
         for plugin in self.plugins:
             pn = '%s.%s' % (plugin.__class__.__module__, plugin.__class__.__name__)
             if pn in self.options:
                 plugin.setup(self.options[pn]);
+
+        # Drop privileges after plugin setup in case of privileged port usage
+        self.drop_privileges()
 
         # Start server
         reactor.callWhenRunning(self.start)
