@@ -9,12 +9,14 @@ DEPENDENCIES (tested version):
 	- python-feedparser (4.1)
 	- python-dateutil (1.4.1)
 
-QUICK INSTALL (Linux/Unix/BSD):
+INSTALLATION (Linux/Unix/BSD):
 
 	1.	Copy src/downpour somewhere in your PYTHONPATH
 	2.	Copy src/downpourd to /usr/bin/downpourd
 	3.	Copy cfg/downpour.cfg to /etc/downpour.cfg and customize it
 	4.	Copy html to /usr/share/downpour/html
+
+	Downpour has not yet been tested on Windows.
 
 STARTING DOWNPOUR:
 
