@@ -21,11 +21,50 @@ class Root(common.AuthenticatedResource):
         elif path.isdigit():
             return Detail(int(path))
 
+    def numcmp(self, zero_null=False, reverse=False):
+        def cmpfn(x, y):
+            x = float(x)
+            y = float(y)
+            if x == y:
+                return 0
+            if x is None or (zero_null and x <= 0) or (not zero_null and x < 0):
+                return 1
+            if y is None or (zero_null and y <= 0) or (not zero_null and y < 0):
+                return -1
+            if reverse:
+                return cmp(y, x)
+            else:
+                return cmp(x, y)
+        return cmpfn
+
     def render_GET(self, request):
         manager = self.get_manager(request)
+        downloads = manager.get_downloads()
+
+        sort = None
+        sortdir = '+'
+        if 'sort' in request.args:
+            sort = request.args['sort'][0]
+            cmp = None
+            key = lambda x: getattr(x, sort)
+            reverse = False
+            if sort[0] == '-':
+                sortdir = '-';
+                sort = sort[1:]
+                reverse = True
+            if sort == 'timeleft':
+                if reverse:
+                    cmp = self.numcmp(True, True)
+                    reverse = False
+                else:
+                    cmp = self.numcmp(True)
+            downloads.sort(cmp, key, reverse)
+
         context = {'title': 'My Downloads',
                    'status': manager.get_status(),
-                   'downloads': manager.get_downloads(),
+                   'downloads': downloads,
+                   'sort': sort,
+                   'sortdir': sortdir,
                    'clientFactory': lambda id: manager.get_download_client(id, True),
                    'statuscode': download.Status,
                    'statusdesc': download.Status.descriptions

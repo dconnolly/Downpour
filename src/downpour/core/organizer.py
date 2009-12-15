@@ -279,7 +279,7 @@ def get_metadata(path, source, filename=None):
 
     # Source can be either feed or download
     name = None
-    if hasattr(source, 'feed'):
+    if hasattr(source, 'feed') and source.feed:
         name = source.feed.name
     elif hasattr(source, 'name'):
         name = source.name

@@ -206,13 +206,111 @@
 				<thead>
 					<tr>
 						<td width="18">&nbsp;</td>
-						<td>Download</td>
-						<td align="right">Size</td>
-						<td align="center">Status</td>
-						<td align="center">Progress</td>
-						<td align="center">Down</td>
-						<td align="center">Up</td>
-						<td align="center">Time Left</td>
+						<td>
+							{% if sort == 'description' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-description">Download</a>
+									<a href="?sort=-description"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=description">Download</a>
+									<a href="?sort=description"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=description">Download</a>
+							{% endif %}
+						</td>
+						<td align="right">
+							{% if sort == 'size' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-size">Size</a>
+									<a href="?sort=-size"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=size">Size</a>
+									<a href="?sort=size"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=-size">Size</a>
+							{% endif %}
+						</td>
+						<td align="center">
+							{% if sort == 'status' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-status">Status</a>
+									<a href="?sort=-status"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=status">Status</a>
+									<a href="?sort=status"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=status">Status</a>
+							{% endif %}
+						</td>
+						<td align="center">
+							{% if sort == 'progress' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-progress">Progress</a>
+									<a href="?sort=-progress"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=progress">Progress</a>
+									<a href="?sort=progress"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=-progress">Progress</a>
+							{% endif %}
+						</td>
+						<td align="center">
+							{% if sort == 'downloadrate' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-downloadrate">Down</a>
+									<a href="?sort=-downloadrate"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=downloadrate">Down</a>
+									<a href="?sort=downloadrate"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=-downloadrate">Down</a>
+							{% endif %}
+						</td>
+						<td align="center">
+							{% if sort == 'uploadrate' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-uploadrate">Up</a>
+									<a href="?sort=-uploadrate"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=uploadrate">Up</a>
+									<a href="?sort=uploadrate"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=-uploadrate">Up</a>
+							{% endif %}
+						</td>
+						<td align="center">
+							{% if sort == 'timeleft' %}
+								{% if sortdir == '+' %}
+									<a href="?sort=-timeleft">Time Left</a>
+									<a href="?sort=-timeleft"><img
+										src="/media/images/sort_asc.png" /></a>
+								{% else %}
+									<a href="?sort=timeleft">Time Left</a>
+									<a href="?sort=timeleft"><img
+										src="/media/images/sort_desc.png" /></a>
+								{% endif %}
+							{% else %}
+								<a href="?sort=timeleft">Time Left</a>
+							{% endif %}
+						</td>
 						<td width="75" align="right">
 							<input type="checkbox" onclick="toggleAll(this, this.form)"/>
 						</td>

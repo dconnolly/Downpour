@@ -136,6 +136,10 @@ table.list thead td {
 	border-top: 1px solid #999;
 	border-bottom: 1px solid #999;
 }
+table.list thead td a {
+	color: #000;
+	text-decoration: none;
+}
 table.list tbody tr.even td {
 	background-color: #EEE;
 }
