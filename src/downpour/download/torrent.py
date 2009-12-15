@@ -27,10 +27,10 @@ class LibtorrentManager:
         # settings.share_ratio_limit = float(self.manager.get_setting('upload_ratio', 0))
         self.session.set_settings(settings)
 
-        # Update torrent status every 5 seconds
+        # Update torrent status
         self.status_update = task.LoopingCall(self.status_update)
         self.status_update.start(2.0)
-        # Process generated alerts every 5 seconds
+        # Process generated alerts
         self.alert_monitor = task.LoopingCall(self.process_alerts)
         self.alert_monitor.start(2.0)
         # Update rate / connection limits

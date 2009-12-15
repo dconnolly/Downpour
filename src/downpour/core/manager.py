@@ -35,12 +35,12 @@ class Manager:
             progress = 0
 
         s = os.statvfs(self.get_work_directory())
-        diskfree = s.f_bavail * s.f_bsize
-        diskfreepct = (float(s.f_blocks - s.f_bavail) / s.f_blocks) * 100
+        diskfree = s.f_bfree * s.f_bsize
+        diskfreepct = (float(s.f_bfree) / s.f_blocks) * 100
 
         s = os.statvfs(self.get_user_directory())
-        userdiskfree = s.f_bavail * s.f_bsize
-        userdiskfreepct = (float(s.f_blocks - s.f_bavail) / s.f_blocks) * 100
+        userdiskfree = s.f_bfree * s.f_bsize
+        userdiskfreepct = (float(s.f_bfree) / s.f_blocks) * 100
 
         active_downloads = len([d for d in downloads if d.active])
         download_rate = sum([d.downloadrate for d in downloads])

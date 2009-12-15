@@ -76,12 +76,13 @@
 			<td width="10">&nbsp;</td>
 			<td width="70" align="right">Storage&nbsp;&nbsp;</td>
 			<td width="235">
+				{% set label = '(' + status.diskfree|filesizeformat + ') free' %}
 				{% if status.diskfreepct < 10 %}
-					{{ status.diskfreepct|progressbar('99%',style='red',label='free') }}
+					{{ status.diskfreepct|progressbar('99%',style='red',label=label) }}
 				{% elif status.diskfreepct < 30 %}
-					{{ status.diskfreepct|progressbar('99%',style='yellow',label='free') }}
+					{{ status.diskfreepct|progressbar('99%',style='yellow',label=label) }}
 				{% else %}
-					{{ status.diskfreepct|progressbar('99%',label='free') }}
+					{{ status.diskfreepct|progressbar('99%',label=label) }}
 				{% endif %}
 			</td>
 		</tr>
