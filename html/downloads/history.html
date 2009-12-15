@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% set section = "downloads" %}
+{% block body %}
+	{% if downloads %}
+		<table width="100%" class="list" border="0" cellspacing="0" cellpadding="0">
+			<thead>
+				<tr>
+					<td>Download</td>
+					<td>Size</td>
+					<td>Type</td>
+					<td>Date</td>
+					<td>User</td>
+				</tr>
+			</thead>
+			<tbody>
+			{% for dl in downloads %}
+				<tr>
+					<td>{{ dl.description }}</td>
+					<td>{{ dl.size|filesizeformat }}</td>
+					<td>{{ mediatypes[dl.media_type] }}</td>
+					<td>{{ dl.completed|timestampformat('%Y/%m/%d %H:%M') }}</td>
+					<td>{{ dl.user.username }}</td>
+				</tr>
+			{% endfor %}
+			</tbody>
+		</table>
+	{% else %}
+		<p>There are no downloads recorded.</p.
+	{% endif %}
+{% endblock %}

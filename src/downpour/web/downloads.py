@@ -1,9 +1,10 @@
 from downpour.web import common
 from downpour.core import models, organizer
 from downpour import download
-import libtorrent as lt
 from twisted.web import server
 from twisted.internet import defer
+from storm import expr
+import libtorrent as lt
 
 class Root(common.AuthenticatedResource):
 
@@ -14,6 +15,7 @@ class Root(common.AuthenticatedResource):
         self.putChild('add', Add())
         self.putChild('cleanup', Cleanup())
         self.putChild('bulk', Bulk())
+        self.putChild('history', History())
 
     def getChild(self, path, request):
         if path in self.children:
@@ -196,6 +198,22 @@ class Bulk(common.AuthenticatedResource):
             finish(None)
         return server.NOT_DONE_YET
 
+class History(common.AdminResource):
+
+    def __init__(self):
+        common.AdminResource.__init__(self)
+        self.putChild('', self)
+
+    def render_GET(self, request):
+        manager = self.get_manager(request)
+        downloads = manager.store.find(models.Download,
+            models.Download.completed > 0
+            ).order_by(expr.Desc(models.Download.completed))
+        context = {'title': 'Download History',
+                   'downloads': downloads,
+                   'mediatypes': organizer.get_media_types()}
+        return self.render_template('downloads/history.html', request, context)
+
 class Detail(common.AuthenticatedResource):
 
     def __init__(self, id):
@@ -203,21 +221,25 @@ class Detail(common.AuthenticatedResource):
         self.id = id
 
     def getChild(self, path, request):
-        if (path == ''):
-            return self
         manager = self.get_manager(request)
         if manager:
-            download = manager.get_download(self.id)
+            self.download = manager.store.find(models.Download,
+                model.Download.id == self.id,
+                model.Download.user_id == self.get_user(request).id).one()
+            print self.download
+        if (path == ''):
+            return self
+        if self.download:
             if (path == 'start'):
-                return Start(download)
+                return Start(self.download)
             elif (path == 'restart'):
-                return Restart(download)
+                return Restart(self.download)
             elif (path == 'stop'):
-                return Stop(download)
+                return Stop(self.download)
             elif (path == 'update'):
-                return Update(download)
+                return Update(self.download)
             elif (path == 'delete'):
-                return Delete(download)
+                return Delete(self.download)
         else:
             return self
 
@@ -225,15 +247,14 @@ class Detail(common.AuthenticatedResource):
         manager = self.get_manager(request)
         store = request.application.get_store()
         user = self.get_user(request)
-        dl = store.find(models.Download, models.Download.id == self.id).one()
         libs = store.find(models.Library, models.Library.user_id == user.id)
-        if dl.mime_type:
-            template = 'downloads/detail_%s.html' % dl.mime_type.replace('/', '_')
+        if self.download.mime_type:
+            template = 'downloads/detail_%s.html' % self.download.mime_type.replace('/', '_')
         else:
             template = 'downloads/detail.html'
-        downloadClient = manager.get_download_client(dl.id, True)
-        context = {'title': dl.description,
-                   'download': dl,
+        downloadClient = manager.get_download_client(self.download.id, True)
+        context = {'title': self.download.description,
+                   'download': self.download,
                    'libraries': organizer.get_media_libraries(libs),
                    'mediatypes': organizer.get_media_types(),
                    'client': downloadClient,
