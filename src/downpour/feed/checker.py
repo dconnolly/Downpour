@@ -177,7 +177,6 @@ def seen(m, items):
     return False
 
 def feed_parse_failed(failure, feeds, manager, feed):
-    print failure
     feed.last_update = time()
     feed.last_error = unicode(failure.getErrorMessage())
     manager.store.commit()
