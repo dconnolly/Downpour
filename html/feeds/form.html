@@ -152,7 +152,7 @@
 							{% endif %}
 						</td>
 						<td>
-							{% if item.download %}
+							{% if item.download and item.download.added %}
 								{{ item.download.added|timestampformat('%m/%d/%Y %H:%M') }}
 							{% else %}
 								Never

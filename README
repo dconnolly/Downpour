@@ -39,7 +39,7 @@ STARTING DOWNPOUR:
 		
 	You can access the web interface at http://localhost:6280
 	(or whatever address/port you configured in downpour.cfg.)
-	The The default login is "admin" / "password".  You can
+	The default login is "admin" / "password".  You can
 	change the admin password in "My Account" once logged in,
 	or setup additional users in the "Users" section.
 

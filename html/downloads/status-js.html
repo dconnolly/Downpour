@@ -22,8 +22,8 @@
     {
       'id': {{ dl.id }},
       'health': {{ dl.health|d(0, true) }},
-      'description': '{{ dl.description }}',
-      'size': '{{ dl.size|filesizeformat|replace('Bytes','b') }}',
+      'description': '{{ dl.description|e }}',
+      'size': '{{ dl.size|d(0,true)|filesizeformat|replace('Bytes','b') }}',
       'status': '{{ statusdesc[dl.status] }}',
       'status_message': '{{ dl.status_message|d('', true) }}',
       'progress': {{ dl.progress|d(0, true) }},

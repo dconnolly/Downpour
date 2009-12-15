@@ -35,7 +35,7 @@ def feed_parsed(parsed, feeds, manager, feed):
     if 'modified' in parsed:
         feed.modified = mktime(parsed.modified.timetuple())
     if 'etag' in parsed:
-        feed.etag = parsed.etag
+        feed.etag = unicode(parsed.etag)
     manager.store.commit()
 
     # Check entries for new downloads
@@ -177,6 +177,7 @@ def seen(m, items):
     return False
 
 def feed_parse_failed(failure, feeds, manager, feed):
+    print failure
     feed.last_update = time()
     feed.last_error = unicode(failure.getErrorMessage())
     manager.store.commit()
