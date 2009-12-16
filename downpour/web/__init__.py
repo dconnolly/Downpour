@@ -12,9 +12,10 @@ class WebInterfacePlugin(Plugin):
     def setup(self, config):
         # Listen for HTTP connections
         if config is not None and config.get('port', 0) is not None:
-            self.templateFactory = Environment(loader=PackageLoader('downpour.web', 'templates'))
-            templateDir = os.path.dirname(self.templateFactory.get_source(
-                    self.templateFactor, 'base.html')[1]);
+            templateLoader = PackageLoader('downpour.web', 'templates')
+            self.templateFactory = Environment(loader=templateLoader)
+            templateDir = os.path.dirname(templateLoader.get_source(
+                    self.templateFactory, 'base.html')[1]);
 
             # Custom filters for templateFactory
             self.templateFactory.filters['progressbar'] = self.progressbar
