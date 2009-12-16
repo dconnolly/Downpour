@@ -154,7 +154,6 @@ class Application:
             db_path = os.path.expanduser(self.options['downpour']['state'])
             if not os.access(db_path, os.F_OK):
                 need_init = True
-            print db_path
             database = create_database('sqlite:%s' % db_path)
             self.store = Store(database)
             if need_init:
