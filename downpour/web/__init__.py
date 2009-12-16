@@ -1,6 +1,6 @@
 from twisted.internet import reactor
 from twisted.web import server
-from jinja2 import Environment, FileSystemLoader
+from jinja2 import Environment, PackageLoader
 from downpour.core.plugins import Plugin
 from downpour.web.common import requestFactory, sessionFactory
 from downpour.web.site import SiteRoot
@@ -12,8 +12,9 @@ class WebInterfacePlugin(Plugin):
     def setup(self, config):
         # Listen for HTTP connections
         if config is not None and config.get('port', 0) is not None:
-            templateDir = os.path.expanduser(config.get('templates', '/usr/share/downpour/html'))
-            self.templateFactory = Environment(loader=FileSystemLoader(templateDir))
+            self.templateFactory = Environment(loader=PackageLoader('downpour.web', 'templates'))
+            templateDir = os.path.dirname(self.templateFactory.get_source(
+                    self.templateFactor, 'base.html')[1]);
 
             # Custom filters for templateFactory
             self.templateFactory.filters['progressbar'] = self.progressbar
@@ -26,7 +27,7 @@ class WebInterfacePlugin(Plugin):
             iface = '0.0.0.0'
             if 'interface' in config:
                 iface = config['interface']
-            root = SiteRoot(templateDir, self.application)
+            root = SiteRoot(templateDir + '/media', self.application)
             site = server.Site(root)
             site.requestFactory = requestFactory(self)
             site.sessionFactory = sessionFactory(self)

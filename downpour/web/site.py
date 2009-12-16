@@ -4,7 +4,7 @@ from twisted.web import static, server
 
 class SiteRoot(common.Resource):
 
-    def __init__(self, templatedir, app):
+    def __init__(self, mediadir, app):
         common.Resource.__init__(self)
         self.putChild('', self)
         self.putChild('resume', Resume())
@@ -14,7 +14,7 @@ class SiteRoot(common.Resource):
         self.putChild('downloads', downloads.Root())
         self.putChild('feeds', feeds.Root())
         self.putChild('libraries', libraries.Root())
-        self.putChild('media', static.File(templatedir + '/media'))
+        self.putChild('media', static.File(mediadir))
         self.putChild('search', search.Root())
         self.putChild('settings', settings.Root())
         self.putChild('status', status.Root())
