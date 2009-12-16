@@ -4,17 +4,26 @@ Created by Jeremy Jongsma (jeremy@jongsma.org)
 
 DEPENDENCIES (tested version):
 
-	- python-twisted (8.2.0)
-	- python-libtorrent (0.14.2)
-	- python-feedparser (4.1)
-	- python-dateutil (1.4.1)
+	- python-twisted (8.2.0+)
+	- python-libtorrent (0.14.2+)
+	- python-feedparser (4.1+)
+	- python-dateutil (1.4.1+)
 
-INSTALLATION (Linux/Unix/BSD):
+INSTALLATION:
 
-	1.	Copy src/downpour somewhere in your PYTHONPATH
-	2.	Copy bin/downpourd to /usr/bin/downpourd
+	1.  Download and install libtorrent from
+		http://sourceforge.net/projects/libtorrent/files/
+
+	2.	Run the following command as root:
+
+			python setup.py install
+
+		If you do not have root access, you can install it in
+		your user directory with:
+
+			python setup.py install --user
+
 	3.	Copy cfg/downpour.cfg to /etc/downpour.cfg and customize it
-	4.	Copy html/ to /usr/share/downpour/html/
 
 	Downpour has not yet been tested on Windows.
 
