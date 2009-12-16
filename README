@@ -12,9 +12,9 @@ DEPENDENCIES (tested version):
 INSTALLATION (Linux/Unix/BSD):
 
 	1.	Copy src/downpour somewhere in your PYTHONPATH
-	2.	Copy src/downpourd to /usr/bin/downpourd
+	2.	Copy bin/downpourd to /usr/bin/downpourd
 	3.	Copy cfg/downpour.cfg to /etc/downpour.cfg and customize it
-	4.	Copy html to /usr/share/downpour/html
+	4.	Copy html/ to /usr/share/downpour/html/
 
 	Downpour has not yet been tested on Windows.
 
