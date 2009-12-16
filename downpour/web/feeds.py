@@ -106,6 +106,7 @@ class Save(common.AuthenticatedResource):
             'url': lambda v: unicode(v),
             'media_type': lambda v: unicode(v),
             'active': lambda v: v == '1',
+            'auto_clean': lambda v: v == '1',
             'update_frequency': lambda v: int(v),
             'queue_size': lambda v: int(v),
             'save_priority': lambda v: int(v),
@@ -125,6 +126,10 @@ class Save(common.AuthenticatedResource):
             v = request.args[k][0]
             if hasattr(feed, k) and k in converters:
                 setattr(feed, k, converters[k](request.args[k][0]))
+        if not 'auto_clean' in request.args:
+            feed.auto_clean = False
+        if not 'active' in request.args:
+            feed.active = False
         manager.store.commit()
 
         # Update immediately if requested

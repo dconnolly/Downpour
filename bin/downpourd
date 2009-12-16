@@ -13,9 +13,9 @@ parser.add_option("-p", "--port", dest="port", type="int",
                     help="Port to listen on")
 parser.add_option("--pid-file", default="/var/run/downpour.pid", dest="pidfile",
                     help="File to write daemon's PID to")
-parser.add_option("--stderr", default="/tmp/downpour.err", dest="stderr",
+parser.add_option("--stderr", default="/dev/null", dest="stderr",
                     help="File for STDERR output")
-parser.add_option("--stdout", default="/tmp/downpour.out", dest="stdout",
+parser.add_option("--stdout", default="/dev/null", dest="stdout",
                     help="File for STDOUT output")
 parser.add_option("-u", "--user", dest="user", help="User to run as")
 parser.add_option("-g", "--group", dest="group", help="Group to run as")

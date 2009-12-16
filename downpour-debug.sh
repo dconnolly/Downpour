@@ -7,4 +7,4 @@ if test ! -e "debug"; then
 	mkdir debug/user-dir
 	mkdir debug/work-dir
 fi
-PYTHONPATH=src bin/downpourd -c cfg/debug.cfg -d
+PYTHONPATH=. bin/downpourd -c cfg/debug.cfg -d

@@ -7,9 +7,10 @@ from storm.locals import Store, create_database
 class Application:
 
     options = {
-        'config': '/etc/downpour.cfg',
+        'config': [os.path.expanduser('~/.config/downpour/downpour.cfg'),
+                   '/etc/downpour.cfg'],
         'downpour': {
-            'state': '/var/lib/downpour/downpour.db',
+            'state': os.path.expanduser('~/.config/downpour/downpour.db'),
             'log': 'info',
             'password': ''
         },
@@ -27,12 +28,10 @@ class Application:
         # Load configuration from file
         config = Application.options['config']
         if options and options.has_key('config'):
-            config = options['config']
-        config = os.path.expanduser(config)
+            config.insert(0, os.path.expanduser(options['config']))
         self.options['config'] = config
         cfgparser = ConfigParser.RawConfigParser()
-        cfgparser.read((config,))
-
+        cfgparser.read(config)
         for section in cfgparser.sections():
             if not self.options.has_key(section):
                 self.options[section] = {}
@@ -155,6 +154,7 @@ class Application:
             db_path = os.path.expanduser(self.options['downpour']['state'])
             if not os.access(db_path, os.F_OK):
                 need_init = True
+            print db_path
             database = create_database('sqlite:%s' % db_path)
             self.store = Store(database)
             if need_init:
