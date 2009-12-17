@@ -85,6 +85,14 @@ match_patterns = {
         #re.compile(r'(?P<z>[\w -\.]+?)\W*(?P<s>\d{1,2})x(?P<e>\d{1,2}).*\.(?P<x>\w+)$', re.IGNORECASE),
     ],
     'video/other': [
+        # Show Name - Title - Date.ext
+        re.compile(r'(?P<z>[\w \.]+?)\W*-\W*(?P<n>[\w \.]+?)\W*(?P<d>[0-9-\.]+).*\.(?P<x>\w+)$', re.IGNORECASE),
+        # Show Name - Date - Title.ext
+        re.compile(r'(?P<z>[\w -\.]+?)\W*(?P<d>[0-9-\.]+)\W*(?P<n>[\w -\.]*\w)?.*\.(?P<x>\w+)$', re.IGNORECASE),
+        # Show Name - Title.ext
+        re.compile(r'(?P<z>[\w \.]+?)\W*-\W*(?P<n>[\w \.]+?).*\.(?P<x>\w+)$', re.IGNORECASE),
+        # Title.ext
+        re.compile(r'(?P<n>.*)\.(?P<x>\w+)$', re.IGNORECASE),
     ],
     'image/photos': [
     ],
@@ -121,6 +129,12 @@ rename_patterns = {
         '%z/s%s.e%e.%N.%x'
     ],
     'video/other': [
+        '%z/%z %y-%m-%d %n.%x',
+        '%z/%Z.%y.%m.%d.%N.%x',
+        '%z/%z - %n.%x',
+        '%z/%Z.%N.%x',
+        '%n/%n.%x',
+        '%n/%N.%x',
     ],
     'image/photos': [
         '%y/%m/%f.%x'
@@ -431,9 +445,11 @@ def get_file_patterns():
     replacements = {
         'a': 'Artist',
         'b': 'Album',
-        'd': '2009-10-15',
+        'd': '15',
+        'D': '2009-10-15',
         'e': '03',
         'E': '3',
+        'm': '10',
         'n': 'Media Title',
         'N': 'Media.Title',
         's': '01',
