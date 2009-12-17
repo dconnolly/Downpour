@@ -233,12 +233,13 @@ class Manager:
         dfr = organizer.process_download(self.application.get_manager(d.user), d, dc)
         dfr.addCallback(self.process_download_complete, d)
         dfr.addErrback(self.process_download_failed, d)
+        return dfr
 
     def process_download_complete(self, result, d):
         d.imported = True
         d.status_message = None
         if d.feed and d.feed.auto_clean:
-            remove_download(d.id);
+            self.remove_download(d.id)
         logging.debug(u'Imported %s (%s)' % (d.id, d.description))
         self.store.commit()
 

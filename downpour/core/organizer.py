@@ -10,7 +10,7 @@ mediatypes = {
     'audio/podcast': 'Podcasts',
     'audio/other': 'Other Audio',
     'video/movie': 'Movies',
-    'video/tv': 'TV Shows',
+    'video/tv': 'TV Series',
     'video/other': 'Other Video',
     'image/photos': 'Photos',
     'image/other': 'Other Images'
@@ -86,9 +86,9 @@ match_patterns = {
     ],
     'video/other': [
         # Show Name - Title - Date.ext
-        re.compile(r'(?P<z>[\w \.]+?)\W*-\W*(?P<n>[\w \.]+?)\W*(?P<d>[0-9-\.]+).*\.(?P<x>\w+)$', re.IGNORECASE),
+        re.compile(r'(?P<z>[\w \.]+?)\W*-\W*(?P<n>[\w \.]+?)\W*(?P<D>[0-9-\.]{3,}[0-9]).*\.(?P<x>\w+)$', re.IGNORECASE),
         # Show Name - Date - Title.ext
-        re.compile(r'(?P<z>[\w -\.]+?)\W*(?P<d>[0-9-\.]+)\W*(?P<n>[\w -\.]*\w)?.*\.(?P<x>\w+)$', re.IGNORECASE),
+        re.compile(r'(?P<z>[\w -\.]+?)\W*(?P<D>[0-9-\.]{3,}[0-9])\W*(?P<n>[\w -\.]*\w)?.*\.(?P<x>\w+)$', re.IGNORECASE),
         # Show Name - Title.ext
         re.compile(r'(?P<z>[\w \.]+?)\W*-\W*(?P<n>[\w \.]+?).*\.(?P<x>\w+)$', re.IGNORECASE),
         # Title.ext
@@ -110,7 +110,13 @@ rename_patterns = {
         '%a - %n.%x'
     ],
     'audio/podcast': [
-        '%z/%e - %n (%D).%x'
+        '%z/%e - %n - %D.%x',
+        '%z/%z %y-%m-%d %n.%x',
+        '%z/%Z.%y.%m.%d.%N.%x',
+        '%z/%z - %n.%x',
+        '%z/%Z.%N.%x',
+        '%n/%n.%x',
+        '%n/%N.%x',
     ],
     'audio/other': [
     ],
@@ -129,12 +135,14 @@ rename_patterns = {
         '%z/s%s.e%e.%N.%x'
     ],
     'video/other': [
-        '%z/%z %y-%m-%d %n.%x',
+        '%z/%z - %y-%m-%d - %n.%x',
         '%z/%Z.%y.%m.%d.%N.%x',
         '%z/%z - %n.%x',
         '%z/%Z.%N.%x',
-        '%n/%n.%x',
-        '%n/%N.%x',
+        '%z/%n.%x',
+        '%z/%N.%x',
+        '%n.%x',
+        '%N.%x',
     ],
     'image/photos': [
         '%y/%m/%f.%x'
@@ -145,11 +153,11 @@ rename_patterns = {
 }
 
 stopwords = [
-    re.compile('\W?hdtv.*', re.IGNORECASE),
-    re.compile('\W?dvdrip.*', re.IGNORECASE),
-    re.compile('\W?b[rd]rip.*', re.IGNORECASE),
-    re.compile('\W?xvid.*', re.IGNORECASE),
-    re.compile('\W?unrated.*', re.IGNORECASE),
+    re.compile(r'\W[A-Z]{3,}\b.*'),
+    re.compile(r'\Wdvdrip\b.*', re.IGNORECASE),
+    re.compile(r'\Wb[rd]rip\b.*', re.IGNORECASE),
+    re.compile(r'\Wxvid\b.*', re.IGNORECASE),
+    re.compile(r'\Wunrated\b.*', re.IGNORECASE),
 ]
 
 # Post-process downloads to organize them into media libraries
@@ -301,7 +309,7 @@ def get_metadata(path, source, filename=None):
 
     return metadata
 
-# Merge in metadata from hachoir-metadata
+# TODO Merge in real metadata from hachoir-metadata parser
 def get_file_metadata(path):
     return {}
 
@@ -353,13 +361,19 @@ def normalize_metadata(metadata, name=None):
 
     if metadata['D']:
         d = parsedate(metadata['D'])
-        metadata['D'] = d.strftime('%y-%m-%d')
-        if not metatdata['y']:
-            metadata['y'] = d.strftime('%y')
-        if not metatdata['m']:
+        metadata['D'] = d.strftime('%Y-%m-%d')
+        if not metadata['y']:
+            metadata['y'] = d.strftime('%Y')
+        if not metadata['m']:
             metadata['m'] = d.strftime('%m')
-        if not metatdata['d']:
+        if not metadata['d']:
             metadata['d'] = d.strftime('%d')
+    elif metadata['y']:
+        if not metadata['d']:
+            metadata['d'] = 1
+        if not metadata['m']:
+            metadata['m'] = 1
+        metadata['D'] = datetime(metadata['y'], metadata['m'], metadata['d'])
 
 def pattern_replace(pattern, values):
     for m in values:

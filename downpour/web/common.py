@@ -59,8 +59,13 @@ class Resource(resource.Resource):
         return None
 
     def render_template(self, template, request, context):
+        unsupported = False
+        ua = request.getHeader('User-Agent')
+        if ua.find('MSIE 6') > -1:
+            unsupported = True
         defaults = {
             'version': VERSION,
+            'unsupported': unsupported,
             'user': request.getSession(auth.IAccount).user
             }
         defaults.update(context);

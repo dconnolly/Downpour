@@ -9,7 +9,7 @@ body {
 	padding: 0;
 	border: 0;
 	font-family: sans-serif;
-	font-size: 11pt;
+	font-size: 10pt;
 	color: #333;
 }
 form {
@@ -106,6 +106,7 @@ img {
 }
 input, select {
 	vertical-align: middle;
+    font-size: 10pt;
 }
 input[type=text],
 input[type=password] {
@@ -171,7 +172,6 @@ table.list tbody td {
 .infoSmall {
 	margin: 5px 0;
 	background: 4px 4px no-repeat url(/media/images/info-small.png) #CCDDFF;
-	min-height: 30px;
 	min-height: 15px;
 	border: 1px solid #3333FF;
 	padding: 3px 3px 3px 24px;

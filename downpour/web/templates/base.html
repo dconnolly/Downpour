@@ -42,6 +42,11 @@
 				</ul>
 			</div>
 			<div id="content">
+				{% if unsupported %}
+				<div class="warning"><b>Unsupported Browser</b><br />
+					Your browser does not support some HTML features used
+					in Downpour.  Please upgrade to a newer browser.</div>
+				{% endif %}
 				{% block heading %}
 				<h1>{{ title }}</h1>
 				{% endblock %}

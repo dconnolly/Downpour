@@ -95,16 +95,33 @@ class WebInterfacePlugin(Plugin):
 
     def librarylink(self, file):
         user = file.user
+        fileparts = file.filename.split('/')
+        parents = []
+        if file.directory:
+            parents.append(file.directory)
+        linkparts = []
+
+        for f in fileparts:
+            linkparts.append(self.get_library_link(user, '/'.join(parents), f))
+            parents.append(f)
+
+        return ' / '.join(linkparts)
+
+    def get_library_link(self, user, directory, path):
         manager = self.application.get_manager(user)
         userdir = manager.get_library_directory()
-        relpath = file.filename
-        if file.directory:
-            relpath = '%s/%s' % (file.directory, file.filename)
         if userdir:
-            realpath = '%s/%s' % (userdir, relpath)
+            relpath = path
+            if directory:
+                relpath = '%s/%s' % (directory, path)
+            realpath = os.path.normpath('%s/%s' % (userdir, relpath))
             if os.access(realpath, os.R_OK):
-                return '<a target="_blank" href="/browse/%s">%s</a>' % (relpath, file.filename)
-        return '%s' % relpath
+                if os.path.isdir(realpath):
+                    return '<a href="/browse/%s/">%s</a>' % (relpath, path)
+                else:
+                    return '<a target="_blank" href="/browse/%s">%s</a>' % (relpath, path)
+        return '%s' % path
+
 
     def timestampformat(self, timestamp, format):
         dt = datetime.fromtimestamp(timestamp)

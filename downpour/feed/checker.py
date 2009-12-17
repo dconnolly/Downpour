@@ -147,7 +147,7 @@ def feed_parsed(parsed, feeds, manager, feed):
             models.FeedItem.feed_id == feed.id,
             models.FeedItem.removed == False
             ).order_by(expr.Desc(models.FeedItem.updated))
-        if len(items) > feed.queue_size:
+        if items.count() > feed.queue_size:
             items = items[feed.queue_size:]
             for i in items:
                 logging.debug('Removing old feed item %d (%s)' % (i.id, i.title))

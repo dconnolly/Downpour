@@ -80,6 +80,31 @@
 						'src="/media/images/stop.png"/></a>';
 				document.getElementById(prefix + 'actions').innerHTML = actionhtml;
 			}
+
+			// Remove deleted downloads
+			table = document.getElementById('downloads');
+			for (var i = 0; i < table.rows.length; ++i) {
+				if (table.rows[i].id.substring(0, 8) == 'download') {
+					id = table.rows[i].id.substring(8);
+					found = false;
+					for (var j = 0; j < data.downloads.length; ++j)
+						if (data.downloads[j].id == id) {
+							found = true;
+							break;
+						}
+					if (!found) {
+						table.rows[i].parentNode.removeChild(table.rows[i]);
+						i--;
+					}
+				}
+			}
+			// Only header row is left
+			if (table.rows.length == 1) {
+				clearInterval(updater);
+				nodlMessage = document.createElement('p');
+				nodlMessage.innerHTML = 'There are no downloads in the queue.';
+				table.parentNode.replaceChild(nodlMessage, table);
+			}
 		}
 
 		function setProgress(bar, pct, suffix, className) {
@@ -118,7 +143,8 @@
 			}
 		}
 
-		addEvent(window, 'load', function() { setInterval(updateTable, 5000); });
+		updater = null;
+		addEvent(window, 'load', function() { updater = setInterval(updateTable, 5000); });
 
 	</script>
 {% endblock %}
@@ -131,49 +157,54 @@
 	<h1>{{ title }}</h1>
 {% endblock %}
 {% block body %}
-	<div style="float: left; height: 95px;" class="greenbox">
-		<form action="/downloads/add/torrent" enctype="multipart/form-data" method="post">
-			<table>
-				<tr>
-					<td width="150">Upload new torrent:</td>
-					<td>
-						<input type="file" name="torrent"/>
-						<input type="submit" value="Upload"/>
-					</td>
-				</tr>
-			</table>
-		</form>
-		<form action="/downloads/add/url" method="post">
-			<table>
-				<tr>
-					<td width="150">Download from URL:</td>
-					<td>
-						<input type="text" name="url"/>
-						<input type="submit" value="Add"/>
-					</td>
-				</tr>
-			</table>
-		</form>
-		<form action="/search" method="post">
-			<table>
-				<tr>
-					<td width="150">Find a download:</td>
-					<td>
-						<input type="text" name="query"/>
-						<input type="hidden" name="query" value="torrent"/>
-						<input type="submit" value="Search"/>
-					</td>
-				</tr>
-			</table>
-		</form>
-	</div>
-	<div style="float:right; width: 250px; height: 95px;" class="info">
-		<span id="status_active_downloads">{{ status.active_downloads }}</span> active downloads<br />
-		<span id="status_downloadrate">{{ status.downloadrate|filesizeformat|replace('Bytes','b') }}/s</span> download<br />
-		<span id="status_uploadrate">{{ status.uploadrate|filesizeformat|replace('Bytes','b') }}/s</span> upload<br />
-		<span id="status_totalrate">{{ (status.downloadrate + status.uploadrate)|filesizeformat|replace('Bytes','b') }}/s</span> total<br />
-		<span id="status_connections">{{ status.connections }}</span> active connections
-	</div>
+	<table width="100%" cellspacing="0" cellpadding="0">
+		<tr>
+			<td width="475" valign="top" class="greenbox">
+				<form action="/downloads/add/torrent" enctype="multipart/form-data" method="post">
+					<table>
+						<tr>
+							<td width="150">Upload new torrent:</td>
+							<td>
+								<input type="file" name="torrent"/>
+								<input type="submit" value="Upload"/>
+							</td>
+						</tr>
+					</table>
+				</form>
+				<form action="/downloads/add/url" method="post">
+					<table>
+						<tr>
+							<td width="150">Download from URL:</td>
+							<td>
+								<input type="text" name="url"/>
+								<input type="submit" value="Add"/>
+							</td>
+						</tr>
+					</table>
+				</form>
+				<form action="/search" method="post">
+					<table>
+						<tr>
+							<td width="150">Find a download:</td>
+							<td>
+								<input type="text" name="query"/>
+								<input type="hidden" name="query" value="torrent"/>
+								<input type="submit" value="Search"/>
+							</td>
+						</tr>
+					</table>
+				</form>
+			</td>
+			<td>&nbsp;</td>
+			<td width="250" valign="top" class="info">
+				<span id="status_active_downloads">{{ status.active_downloads }}</span> active downloads<br />
+				<span id="status_downloadrate">{{ status.downloadrate|filesizeformat|replace('Bytes','b') }}/s</span> download<br />
+				<span id="status_uploadrate">{{ status.uploadrate|filesizeformat|replace('Bytes','b') }}/s</span> upload<br />
+				<span id="status_totalrate">{{ (status.downloadrate + status.uploadrate)|filesizeformat|replace('Bytes','b') }}/s</span> total<br />
+				<span id="status_connections">{{ status.connections }}</span> active connections
+			</td>
+		</tr>
+	</table>
 	<br style="clear: right;"/>
 	{% if status.paused %}
 		<div class="warning">
@@ -202,7 +233,7 @@
 	</table>
 	{% if downloads %}
 		<form action="/downloads/bulk" method="post">
-			<table width="100%" class="list" border="0" cellspacing="0" cellpadding="0">
+			<table width="100%" id="downloads" class="list" border="0" cellspacing="0" cellpadding="0">
 				<thead>
 					<tr>
 						<td width="18">&nbsp;</td>
@@ -299,16 +330,16 @@
 						<td align="center">
 							{% if sort == 'timeleft' %}
 								{% if sortdir == '+' %}
-									<a href="?sort=-timeleft">Time Left</a>
+									<a href="?sort=-timeleft">ETA</a>
 									<a href="?sort=-timeleft"><img
 										src="/media/images/sort_asc.png" /></a>
 								{% else %}
-									<a href="?sort=timeleft">Time Left</a>
+									<a href="?sort=timeleft">ETA</a>
 									<a href="?sort=timeleft"><img
 										src="/media/images/sort_desc.png" /></a>
 								{% endif %}
 							{% else %}
-								<a href="?sort=timeleft">Time Left</a>
+								<a href="?sort=timeleft">ETA</a>
 							{% endif %}
 						</td>
 						<td width="75" align="right">
