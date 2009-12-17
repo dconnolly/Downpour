@@ -145,7 +145,7 @@ rename_patterns = {
         '%N.%x',
     ],
     'image/photos': [
-        '%y/%m/%f.%x'
+        '%y/%m/%f.%x',
         '%y/%m/%d/%f.%x'
     ],
     'image/other': [
@@ -462,15 +462,17 @@ def get_file_patterns():
         'd': '15',
         'D': '2009-10-15',
         'e': '03',
+        'f': 'filename',
         'E': '3',
         'm': '10',
         'n': 'Media Title',
         'N': 'Media.Title',
+        'p': 'filename.ext',
         's': '01',
         'S': '1',
         't': '05',
         'T': '5',
-        'y': '1995',
+        'y': '2009',
         'z': 'Series Name',
         'Z': 'Series.Name',
         'x': 'ext',
