@@ -485,6 +485,8 @@ class UserManager(Manager):
         if not userdir:
             userdir = '%s/%s' % (self.get_user_directory(), self.user.username)
         userdir = os.path.expanduser(userdir)
+        if userdir[0] != '/':
+            userdir = '%s/%s' % (os.getcwd(), userdir)
         if not os.path.exists(userdir):
             os.mkdir(userdir)
         return userdir

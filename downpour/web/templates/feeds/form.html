@@ -91,16 +91,14 @@
 							value="4">4 items</option>
 						<option {% if feed.queue_size == 5 %}selected{% endif %}
 							value="5">5 items</option>
-						<option {% if feed.queue_size == 6 %}selected{% endif %}
-							value="6">6 items</option>
-						<option {% if feed.queue_size == 7 %}selected{% endif %}
-							value="7">7 items</option>
-						<option {% if feed.queue_size == 8 %}selected{% endif %}
-							value="8">8 items</option>
-						<option {% if feed.queue_size == 9 %}selected{% endif %}
-							value="9">9 items</option>
 						<option {% if feed.queue_size == 10 %}selected{% endif %}
 							value="10">10 items</option>
+						<option {% if feed.queue_size == -1 %}selected{% endif %}
+							value="-1">1 full season</option>
+						<option {% if feed.queue_size == -2 %}selected{% endif %}
+							value="-2">2 full seasons</option>
+						<option {% if feed.queue_size == -3 %}selected{% endif %}
+							value="-3">3 full seasons</option>
 					</select>
 				</td>
 			</tr>

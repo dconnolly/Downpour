@@ -315,7 +315,10 @@ def get_file_metadata(path):
 
 def normalize_metadata(metadata, name=None):
 
-    if metadata['z']:
+    if name:
+        metadata['z'] = name
+        metadata['Z'] = metadata['z'].replace(' ', '.')
+    elif metadata['z']:
         metadata['z'] = metadata['z'].replace('.', ' ')
         metadata['z'] = metadata['z'].replace('_', ' ')
         metadata['Z'] = metadata['z'].replace(' ', '.')

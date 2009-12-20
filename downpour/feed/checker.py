@@ -3,8 +3,9 @@ from twisted.internet import threads
 import feedparser, logging
 from time import time, mktime
 from datetime import datetime
+from dateutil.parser import parse as parsedate
 from storm import expr
-import os
+import os, re
 
 def check_feeds(manager):
     now = time()
@@ -44,18 +45,22 @@ def feed_parsed(parsed, feeds, manager, feed):
         items.reverse()
 
     item_count = 0
+    latest_season = 1;
     seen_items = []
 
     # Prime previously-seen item map to avoid duplicate downloads
     pastitems = manager.store.find(models.FeedItem,
         models.FeedItem.feed_id == feed.id)
     for pi in pastitems:
-        md = organizer.get_metadata(os.path.basename(pi.link), feed)
-        seen_items.append({'d': md['d'], 'e': md['e'], 's': md['s']})
+        epdef = get_episode_definition(pi)
+        seen_items.append(epdef)
+        if epdef['s'] and int(epdef['s']) > latest_season:
+            latest_season = int(epdef['s'])
 
     for e in items:
         do_update = False
         updated = mktime(e.updated_parsed)
+        season = 0
 
         item = manager.store.find(models.FeedItem,
             models.FeedItem.feed_id == feed.id,
@@ -63,8 +68,12 @@ def feed_parsed(parsed, feeds, manager, feed):
 
         # Check for enclosures
         link = e.link
+        size = 0
+        mimetype = None
         if 'enclosures' in e and len(e.enclosures):
             link = e.enclosures[0].href
+            size = int(e.enclosures[0].length)
+            mimetype = e.enclosures[0].type
 
         # New item
         if not item:
@@ -89,15 +98,12 @@ def feed_parsed(parsed, feeds, manager, feed):
 
         if do_update:
             # Check existing library for matching episode
-            filename = os.path.basename(item.link)
-            metadata = organizer.get_metadata(filename, feed)
-            if seen(metadata, seen_items):
+            ed = get_episode_definition(item)
+            if seen(ed, seen_items):
                 # Prevent downloading duplicate items
                 do_update = False
             else:
-                seen_items.append({'d': metadata['d'],
-                                   'e': metadata['e'],
-                                   's': metadata['s']})
+                seen_items.append(ed)
                 pattern = feed.rename_pattern
                 if not pattern:
                     lib = manager.get_library(media_type=feed.media_type)
@@ -105,25 +111,29 @@ def feed_parsed(parsed, feeds, manager, feed):
                         pattern = lib.pattern
                 if not pattern:
                     pattern = '%p'
-                destfile = organizer.pattern_replace(pattern, metadata)
-                if os.access(destfile, os.R_OK):
-                    do_update = False
-                elif metadata['z'] and (metadata['e'] or metadata['d']):
+                if ed['e'] or ed['d']:
+                    if ed['s'] and feed.queue_size < 0:
+                        season = int(ed['s'])
+                        if season > latest_season:
+                            latest_season = season
+                        elif season > 0 and season < (latest_season + feed.queue_size):
+                            do_update = False
+                    destfile = organizer.pattern_replace(pattern, ed)
                     destdir = manager.get_full_path(os.path.dirname(destfile),
                         feed.media_type)
-                    if os.access(destdir, os.R_OK):
+                    if do_update and os.access(destdir, os.R_OK):
                         for e in os.listdir(destdir):
-                            emd = organizer.get_metadata('%s/%s' % (destdir, e), feed)
-                            if metadata['z'] == emd['z']:
+                            ed2 = organizer.get_metadata('%s/%s' % (destdir, e), feed)
+                            if ed['z'] == feed.name:
                                 # Match season/episode
-                                if metadata['e'] and \
-                                        metadata['e'] == emd['e'] and \
-                                        metadata['s'] == emd['s']:
+                                if ed['e'] and \
+                                        ed['e'] == ed2['e'] and \
+                                        ed['s'] == ed2['s']:
                                     do_update = False
                                     break
                                 # Match date
-                                elif metadata['d'] and \
-                                        metadata['d'] == emd['d']:
+                                elif ed['d'] and \
+                                        ed['d'] == ed2['d']:
                                     do_update = False
                                     break
 
@@ -132,6 +142,8 @@ def feed_parsed(parsed, feeds, manager, feed):
             d.feed_id = feed.id
             d.user_id = feed.user_id
             d.url = item.link
+            d.size = size
+            d.mime_type = mimetype
             d.description = item.title
             d.media_type = feed.media_type
             item.download = d
@@ -142,23 +154,33 @@ def feed_parsed(parsed, feeds, manager, feed):
             break;
 
     # Remove old downloads
-    if feed.queue_size > 0:
+    if feed.queue_size != 0:
         items = manager.store.find(models.FeedItem,
             models.FeedItem.feed_id == feed.id,
             models.FeedItem.removed == False
             ).order_by(expr.Desc(models.FeedItem.updated))
-        if items.count() > feed.queue_size:
-            items = items[feed.queue_size:]
+        remove = []
+        if feed.queue_size > 0:
+            if items.count() > feed.queue_size:
+                remove = items[feed.queue_size:]
+        elif feed.queue_size < 0:
+            # less than zero means last abs(x) full seasons
             for i in items:
-                logging.debug('Removing old feed item %d (%s)' % (i.id, i.title))
-                if i.download:
-                    for f in i.download.files:
-                        realpath = '/'.join(
-                            (manager.get_library_directory(feed.user),
-                                file.directory, file.filename))
-                        if organizer.remove_file(realpath, True):
-                            i.download.files.remove(f)
-                i.removed = True
+                ed = get_episode_definition(i)
+                if (ed['s']):
+                    season = int(ed['s'])
+                    if season > 0 and season < (latest_season + feed.queue_size):
+                        remove.append(i)
+        for i in remove:
+            logging.debug('Removing old feed item %d (%s)' % (i.id, i.title))
+            if i.download:
+                for f in i.download.files:
+                    realpath = '/'.join(
+                        (manager.get_library_directory(feed.user),
+                            file.directory, file.filename))
+                    if organizer.remove_file(realpath, True):
+                        i.download.files.remove(f)
+            i.removed = True
 
     manager.store.commit()
 
@@ -176,7 +198,30 @@ def seen(m, items):
                 return True
     return False
 
+def get_episode_definition(item):
+    ed = { 'd': None, 's': None, 'e': None, 'z': item.feed.name }
+    rl = (
+        re.compile(r's(?P<s>[0-9]{1,2})\W?e(?P<e>[0-9]{1,2})', re.IGNORECASE),
+        re.compile(r'(?P<s>[0-9]{1,2})x(?P<e>[0-9]{1,2})', re.IGNORECASE),
+        re.compile(r'(?P<d>[0-9\-\.]{8,})', re.IGNORECASE)
+    )
+    for r in rl:
+        match = r.search(item.link)
+        if match:
+            ed.update(match.groupdict())
+        else:
+            match = r.search(item.title)
+            if match:
+                ed.update(match.groupdict())
+    if ed['d']:
+        try:
+            ed['d'] = parsedate(ed['d'])
+        except Exception:
+            ed['d'] = None
+    return ed
+
 def feed_parse_failed(failure, feeds, manager, feed):
+    #print failure
     feed.last_update = time()
     feed.last_error = unicode(failure.getErrorMessage())
     manager.store.commit()
