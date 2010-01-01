@@ -154,11 +154,17 @@ rename_patterns = {
 }
 
 stopwords = [
+    # Any three-letter (or more) acronym (HDTV, LOL, etc)
     re.compile(r'\W[A-Z]{3,}\b.*'),
+    # DVDRIP/BDRIP tags
     re.compile(r'\Wdvdrip\b.*', re.IGNORECASE),
     re.compile(r'\Wb[rd]rip\b.*', re.IGNORECASE),
+    # XviD tags
     re.compile(r'\Wxvid\b.*', re.IGNORECASE),
+    # UNRATED
     re.compile(r'\Wunrated\b.*', re.IGNORECASE),
+    # 1080p/720p
+    re.compile(r'\[0-9]{3,4}p\b.*', re.IGNORECASE),
 ]
 
 # Post-process downloads to organize them into media libraries
