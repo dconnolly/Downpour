@@ -38,10 +38,10 @@ class WebInterfacePlugin(Plugin):
         pixwidth = ''
         dimstyle = ''
         if type(width) == str and width.endswith('%'):
-            pixwidth = str(int(percentage)) + '%'
+            pixwidth = str(int(math.ceil(percentage))) + '%'
             dimstyle = ' style="width: ' + str(width) + ';"'
         else:
-            pixwidth = str(int((float(percentage)/100) * width)) + 'px'
+            pixwidth = str(int(math.ceil((float(percentage)/100) * width))) + 'px'
             dimstyle = ' style="width: ' + str(width) + 'px;"'
         cssclass = ''
         if style:
