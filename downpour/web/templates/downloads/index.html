@@ -252,7 +252,7 @@
 								<a href="?sort=description">Download</a>
 							{% endif %}
 						</td>
-						<td align="right">
+						<td align="right" width="70">
 							{% if sort == 'size' %}
 								{% if sortdir == '+' %}
 									<a href="?sort=-size">Size</a>
@@ -267,7 +267,7 @@
 								<a href="?sort=-size">Size</a>
 							{% endif %}
 						</td>
-						<td align="center">
+						<td align="center" width="70">
 							{% if sort == 'status' %}
 								{% if sortdir == '+' %}
 									<a href="?sort=-status">Status</a>
@@ -282,7 +282,7 @@
 								<a href="?sort=status">Status</a>
 							{% endif %}
 						</td>
-						<td align="center">
+						<td align="center" width="110">
 							{% if sort == 'progress' %}
 								{% if sortdir == '+' %}
 									<a href="?sort=-progress">Progress</a>
@@ -297,7 +297,7 @@
 								<a href="?sort=-progress">Progress</a>
 							{% endif %}
 						</td>
-						<td align="center">
+						<td align="center" width="70">
 							{% if sort == 'downloadrate' %}
 								{% if sortdir == '+' %}
 									<a href="?sort=-downloadrate">Down</a>
@@ -312,7 +312,7 @@
 								<a href="?sort=-downloadrate">Down</a>
 							{% endif %}
 						</td>
-						<td align="center">
+						<td align="center" width="70">
 							{% if sort == 'uploadrate' %}
 								{% if sortdir == '+' %}
 									<a href="?sort=-uploadrate">Up</a>
@@ -327,7 +327,7 @@
 								<a href="?sort=-uploadrate">Up</a>
 							{% endif %}
 						</td>
-						<td align="center">
+						<td align="center" width="80">
 							{% if sort == 'timeleft' %}
 								{% if sortdir == '+' %}
 									<a href="?sort=-timeleft">ETA</a>
@@ -342,7 +342,7 @@
 								<a href="?sort=timeleft">ETA</a>
 							{% endif %}
 						</td>
-						<td width="75" align="right">
+						<td width="65" align="right">
 							<input type="checkbox" onclick="toggleAll(this, this.form)"/>
 						</td>
 					</tr>
