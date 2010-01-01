@@ -57,12 +57,12 @@ match_patterns = {
         # Movie Name (2009).avi
         # Movie.Name.2009.mp4
         # Movie.Name[2009].DVDRIP.XviD.avi
-        re.compile(r'(?P<n>.+)\W*[\W\S](?P<y>[0-9]{4}).*\.(?P<x>\w+)$', re.IGNORECASE),
+        re.compile(r'(?P<n>[^/]+?)\W?[\W\S](?P<y>[0-9]{4})[^/]*\.(?P<x>\w+)$', re.IGNORECASE),
         # Movie.Name.DVDRIP.XviD.avi
-        re.compile(r'(?P<n>.+)\Wdvdrip.*\.(?P<x>\w+)$', re.IGNORECASE),
-        re.compile(r'(?P<n>.+)\Wb[rd]rip.*\.(?P<x>\w+)$', re.IGNORECASE),
+        re.compile(r'(?P<n>[^/]+)\Wdvdrip[^/]*\.(?P<x>\w+)$', re.IGNORECASE),
+        re.compile(r'(?P<n>[^/]+)\Wb[rd]rip[^/]*\.(?P<x>\w+)$', re.IGNORECASE),
         # Movie Name.avi
-        re.compile(r'(?P<n>.+)\.(?P<x>\w+)$', re.IGNORECASE),
+        re.compile(r'(?P<n>[^/]+)\.(?P<x>\w+)$', re.IGNORECASE),
     ],
     'video/tv': [
         # s01e01.avi
@@ -230,7 +230,7 @@ def import_files(download, manager, library, firstRun=True):
                 if ext in extra_mimetypes:
                     mimetype = extra_mimetypes[ext]
             matches = sum([1 for m in media_mimetypes[download.media_type] \
-                    if mimetype.startswith(m)])
+                    if mimetype and mimetype.startswith(m)])
             if matches == 0:
                 download.files.remove(file)
                 if not firstRun:
@@ -374,10 +374,10 @@ def normalize_metadata(metadata, name=None):
             metadata['d'] = d.strftime('%d')
     elif metadata['y']:
         if not metadata['d']:
-            metadata['d'] = 1
+            metadata['d'] = '01'
         if not metadata['m']:
-            metadata['m'] = 1
-        metadata['D'] = datetime(metadata['y'], metadata['m'], metadata['d'])
+            metadata['m'] = '01'
+        metadata['D'] = '%s-%s-%s' % (metadata['y'], metadata['m'], metadata['d'])
 
 def pattern_replace(pattern, values):
     for m in values:
