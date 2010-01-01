@@ -2,12 +2,13 @@ Downpour v0.1
 -------------
 Created by Jeremy Jongsma (jeremy@jongsma.org)
 
-DEPENDENCIES (tested version):
+MODULE DEPENDENCIES (tested version):
 
-	- python-twisted (8.2.0+)
-	- python-libtorrent (0.14.2+)
-	- python-feedparser (4.1+)
-	- python-dateutil (1.4.1+)
+	- twisted (8.2.0+) 	
+	- libtorrent (0.14.2+)
+	- feedparser (4.1+)
+	- dateutil (1.4.1+)
+	- storm (0.14+)
 
 INSTALLATION:
 
@@ -24,6 +25,8 @@ INSTALLATION:
 			python setup.py install --user
 
 	3.	Copy cfg/downpour.cfg to /etc/downpour.cfg and customize it
+
+	4.	Copy bin/downpourd to /usr/sbin/downpourd
 
 	Downpour has not yet been tested on Windows.
 

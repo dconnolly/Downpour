@@ -4,10 +4,6 @@ from setuptools import setup, find_packages
 from downpour.core import VERSION
 import sys, os
 
-binloc = sys.exec_prefix + '/bin'
-if not os.access(binloc, os.W_OK):
-    binloc = os.path.expanduser('~/bin')
-
 setup(name="Downpour",
     version=VERSION,
     license="GPLv2",
@@ -22,8 +18,7 @@ setup(name="Downpour",
     url="http://home.jongsma.org/software/downpour/",
     packages=find_packages(exclude='tests'),
     include_package_data=True,
+    # Not zip-safe until /media/ handler is rewritten
     zip_safe=False,
-    data_files=[#('/etc', ['cfg/downpour.cfg']),
-                (binloc, ['bin/downpourd'])],
     install_requires=['Twisted>=8.2.0', 'FeedParser>=4.1', 'python-dateutil>=1.4.1']
 )
