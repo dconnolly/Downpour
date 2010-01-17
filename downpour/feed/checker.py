@@ -1,7 +1,7 @@
 from downpour.core import models, organizer
 from twisted.internet import threads
 import feedparser, logging
-from time import time, mktime
+from time import time, mktime, localtime
 from datetime import datetime
 from dateutil.parser import parse as parsedate
 from storm import expr
@@ -17,9 +17,9 @@ def check_feeds(manager):
 def update_feeds(feeds, application):
     if len(feeds):
         f = feeds.pop(0)
-        modified = 0
+        modified = None
         if not f.modified is None:
-            modified = datetime.fromtimestamp(f.modified)
+            modified = localtime(f.modified)
         d = threads.deferToThread(feedparser.parse, f.url, etag=f.etag,
                 modified=modified)
         manager = application.get_manager(f.user)
@@ -31,10 +31,9 @@ def feed_parsed(parsed, feeds, manager, feed):
     logging.debug('Updating feed "%s" (%s)' % (feed.name, feed.url))
 
     # Update etag/lastmod for future requests
-    feed.last_update = time()
     feed.last_error = None
     if 'modified' in parsed:
-        feed.modified = mktime(parsed.modified.timetuple())
+        feed.modified = mktime(parsed.modified)
     if 'etag' in parsed:
         feed.etag = unicode(parsed.etag)
     manager.store.commit()
@@ -44,8 +43,9 @@ def feed_parsed(parsed, feeds, manager, feed):
     if feed.save_priority == '1':
         items.reverse()
 
+    has_new = False
     item_count = 0
-    latest_season = 1;
+    latest_season = 1
     seen_items = []
 
     # Prime previously-seen item map to avoid duplicate downloads
@@ -138,6 +138,7 @@ def feed_parsed(parsed, feeds, manager, feed):
                                     break
 
         if do_update:
+            has_new = True
             d = models.Download()
             d.feed_id = feed.id
             d.user_id = feed.user_id
@@ -152,6 +153,12 @@ def feed_parsed(parsed, feeds, manager, feed):
         item_count += 1
         if feed.queue_size > 0 and item_count >= feed.queue_size:
             break;
+
+    if has_new:
+        if 'modified' in parsed:
+            feed.last_update = mktime(parsed.modified)
+        else:
+            feed.last_update = time()
 
     # Remove old downloads
     if feed.queue_size != 0:
