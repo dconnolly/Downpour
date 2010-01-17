@@ -73,8 +73,10 @@ class DownloadStatus(object):
         contentDisposition = headers.get('content-disposition', None)
         if contentDisposition and contentDisposition[0].startswith('attachment'):
             newName = contentDisposition[0].split('=')[1]
+            if newName[0] == '"' and newName[len(newName)-1] == '"':
+                newName = newName[1:len(newName)-1]
             if downloader.renameFile(newName):
-                self.download.filename = newName
+                self.download.filename = unicode(newName)
 
     def onStart(self, downloader, partialContent):
         self.start_time = time.time()
@@ -83,11 +85,13 @@ class DownloadStatus(object):
 
     def onPart(self, downloader, data):
         self.bytes_downloaded = self.bytes_downloaded + len(data)
-        self.download.progress = (self.bytes_downloaded / self.download.size) * 100
+        if self.download.size:
+            self.download.progress = (self.bytes_downloaded / self.download.size) * 100
         self.download_rate = (self.bytes_downloaded - self.bytes_start) / (time.time() - self.start_time)
         self.download.downloadrate = self.download_rate
         self.download.downloaded = self.bytes_downloaded
-        self.timeleft = (self.download.size - self.bytes_downloaded) / self.download_rate
+        if self.download.size:
+            self.timeleft = (self.download.size - self.bytes_downloaded) / self.download_rate
 
     def onEnd(self, downloader):
         self.download.progress = 100
@@ -112,7 +116,10 @@ class HTTPManagedDownloader(HTTPDownloader):
         self.bucketFilter.rate = rate
 
     def renameFile(self, newName):
-        fullName = os.path.basename(self.fileName) + newName
+        logging.debug(self.fileName)
+        logging.debug(newName)
+        fullName = os.path.sep.join((os.path.dirname(self.fileName),newName))
+        logging.debug(fullName)
         # Only override filename if we're not resuming a download
         if not self.requestedPartial or not os.path.exists(self.fileName):
             self.fileName = fullName

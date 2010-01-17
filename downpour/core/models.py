@@ -69,6 +69,7 @@ class Feed(object):
     modified = Int()
     active = Bool()
     auto_clean = Bool()
+    last_check = Int()
     last_update = Int()
     last_error = Unicode()
     update_frequency = Int()

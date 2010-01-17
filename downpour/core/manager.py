@@ -11,6 +11,9 @@ import feedparser, os, mimetypes, logging, tempfile, shutil
 class Manager:
 
     download_clients = []
+    downloads = None
+    feeds = None
+    libraries = None
 
     client_mimetypes = {
         'application/x-bittorrent': LibtorrentClient
@@ -26,13 +29,6 @@ class Manager:
         self.paused = self.application.is_paused()
 
     def get_status(self):
-        downloads = self.get_downloads()
-        queuedsize = sum([d.size for d in downloads if d.size])
-        if queuedsize:
-            queueddone = sum([d.downloaded for d in downloads])
-            progress = round((float(queueddone) / queuedsize) * 100, 2)
-        else:
-            progress = 0
 
         s = os.statvfs(self.get_work_directory())
         diskfree = s.f_bfree * s.f_bsize
@@ -42,10 +38,29 @@ class Manager:
         userdiskfree = s.f_bfree * s.f_bsize
         userdiskfreepct = (float(s.f_bfree) / s.f_blocks) * 100
 
-        active_downloads = len([d for d in downloads if d.active])
-        download_rate = sum([d.downloadrate for d in downloads])
-        upload_rate = sum([d.uploadrate for d in downloads])
-        connections = sum([d.connections for d in downloads])
+        queuedsize = 0
+        queueddone = 0
+        active_downloads = 0
+        download_rate = 0
+        upload_rate = 0
+        connections = 0
+
+        downloads = self.get_downloads()
+        for d in downloads:
+            if d.size:
+                queuedsize += d.size
+                queueddone += d.downloaded
+            if d.active:
+                active_downloads += 1
+            download_rate += d.downloadrate
+            upload_rate += d.uploadrate
+            connections += d.connections
+
+        if queuedsize:
+            progress = round((float(queueddone) / queuedsize) * 100, 2)
+        else:
+            progress = 0
+
         status = {'host': self.get_option(('downpour', 'interface'), 'localhost'),
                 'version': VERSION,
                 'downloads': len(downloads),
@@ -64,7 +79,7 @@ class Manager:
     
     def add_download(self, d):
         max_queued = int(self.get_setting('max_queued', 0))
-        if max_queued and (len(self.get_downloads()) >= max_queued):
+        if max_queued and (len(self.downloads) >= max_queued):
             raise Exception('Too many downloads queued (see "max_queued" config var)')
 
         if d.url:
@@ -96,6 +111,7 @@ class Manager:
         d.downloaded = 0
 
         self.store.add(d)
+        self.downloads.append(d)
         self.store.commit()
         logging.debug(u'Added new download ' + d.description)
 
@@ -104,6 +120,8 @@ class Manager:
         return d.id
 
     def get_downloads(self):
+        if not self.downloads is None:
+            return self.downloads
         raise NotImplementedError('Manager must be subclassed')
 
     def get_download(self, id):
@@ -160,6 +178,7 @@ class Manager:
             dc.remove()
             Manager.download_clients.remove(dc)
         d.deleted = True
+        self.downloads.remove(d)
         self.store.commit()
         try:
             if remove_files:
@@ -412,7 +431,9 @@ class GlobalManager(Manager):
                 downloads.reverse()
                 for d in filter(lambda x: x.active, downloads):
                     if active > max_active:
-                        self.stop_download(d.id)
+                        sdfr = self.stop_download(d.id)
+                        sdfr.addCallback(self.update_status, d, Status.QUEUED)
+                        sdfr.addErrback(self.update_status, d, Status.QUEUED)
                         active = active - 1;
                     else:
                         break
@@ -435,11 +456,15 @@ class GlobalManager(Manager):
                     dc.set_max_connections(client_conn)
 
     def get_downloads(self):
-        return list(self.store.find(models.Download,
-            models.Download.deleted == False).order_by(models.Download.added))
+        if self.downloads is None:
+            self.downloads = list(self.store.find(models.Download,
+                models.Download.deleted == False).order_by(models.Download.added))
+        return self.downloads
 
     def get_feeds(self):
-        return list(self.store.find(models.Feed).order_by(models.Feed.name))
+        if self.feeds is None:
+            self.feeds = list(self.store.find(models.Feed).order_by(models.Feed.name))
+        return self.feeds
 
 class UserManager(Manager):
 
@@ -456,29 +481,29 @@ class UserManager(Manager):
             return list(self.store.find(models.Download,
                 models.Download.deleted == False
                 ).order_by(models.Download.added))
-        else:
-            return list(self.store.find(models.Download,
+        elif self.downloads is None:
+            self.downloads = list(self.store.find(models.Download,
                 models.Download.deleted == False,
                 models.Download.user_id == self.user.id
                 ).order_by(models.Download.added))
+        return self.downloads
 
     def get_feeds(self):
         if self.user.admin:
             return list(self.store.find(models.Feed
                 ).order_by(models.Feed.name))
-        else:
+        elif self.feeds is None:
             return list(self.store.find(models.Feed,
                 models.Feed.user_id == self.user.id
                 ).order_by(models.Feed.name))
+        return self.feeds
 
     def get_libraries(self):
-        if self.user.admin:
-            return list(self.store.find(models.Library
-                ).order_by(models.Library.media_type))
-        else:
-            return list(self.store.find(models.Library,
+        if self.libraries is None:
+            self.libraries = list(self.store.find(models.Library,
                 models.Library.user_id == self.user.id
                 ).order_by(models.Library.media_type))
+        return self.libraries
 
     def get_library_directory(self):
         userdir = self.user.directory

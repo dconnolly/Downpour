@@ -10,7 +10,7 @@ import os, re
 def check_feeds(manager):
     now = time()
     feeds = manager.store.find(models.Feed)
-    toupdate = [f for f in feeds if (f.last_update is None or (f.update_frequency*60) + f.last_update < now)]
+    toupdate = [f for f in feeds if (f.last_check is None or (f.update_frequency*60) + f.last_check < now)]
     if len(toupdate):
         update_feeds(toupdate, manager.application)
 
@@ -32,6 +32,7 @@ def feed_parsed(parsed, feeds, manager, feed):
 
     # Update etag/lastmod for future requests
     feed.last_error = None
+    feed.last_check = time()
     if 'modified' in parsed:
         feed.modified = mktime(parsed.modified)
     if 'etag' in parsed:

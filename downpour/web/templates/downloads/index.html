@@ -358,7 +358,7 @@
 								&nbsp;
 							{% endif %}
 						</td>
-						<td id="download{{ dl.id }}_description"><a href="/downloads/{{ dl.id }}">{{ dl.description }}</a></td>
+						<td class="description" id="download{{ dl.id }}_description"><a href="/downloads/{{ dl.id }}">{{ dl.description }}</a></td>
 						<td id="download{{ dl.id }}_size" align="right" class="nowrap">
 							{% if dl.size %}
 								{{ dl.size|filesizeformat|replace('Bytes','b') }}
