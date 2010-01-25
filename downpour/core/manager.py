@@ -79,7 +79,7 @@ class Manager:
     
     def add_download(self, d):
         max_queued = int(self.get_setting('max_queued', 0))
-        if max_queued and (len(self.downloads) >= max_queued):
+        if max_queued and (len(self.get_downloads()) >= max_queued):
             raise Exception('Too many downloads queued (see "max_queued" config var)')
 
         if d.url:
@@ -111,7 +111,7 @@ class Manager:
         d.downloaded = 0
 
         self.store.add(d)
-        self.downloads.append(d)
+        self.get_downloads().append(d)
         self.store.commit()
         logging.debug(u'Added new download ' + d.description)
 
@@ -178,7 +178,7 @@ class Manager:
             dc.remove()
             Manager.download_clients.remove(dc)
         d.deleted = True
-        self.downloads.remove(d)
+        self.get_downloads().remove(d)
         self.store.commit()
         try:
             if remove_files:
@@ -438,28 +438,27 @@ class GlobalManager(Manager):
                     else:
                         break
 
-            # Reset transfer limits
-            if max_ulrate > 0:
-                client_ulrate = int(max_ulrate / active)
-                for d in filter(lambda x: x.active, downloads):
-                    dc = self.get_download_client(d.id)
-                    dc.set_upload_rate(client_ulrate)
-            if max_dlrate > 0:
-                client_dlrate = int(max_dlrate / active)
-                for d in filter(lambda x: x.active, downloads):
-                    dc = self.get_download_client(d.id)
-                    dc.set_download_rate(client_dlrate)
-            if max_conn > 0:
-                client_conn = int(max_conn / active)
-                for d in filter(lambda x: x.active, downloads):
-                    dc = self.get_download_client(d.id)
-                    dc.set_max_connections(client_conn)
+            if active > 0:
+                # Reset transfer limits
+                if max_ulrate > 0:
+                    client_ulrate = int(max_ulrate / active)
+                    for d in filter(lambda x: x.active, downloads):
+                        dc = self.get_download_client(d.id)
+                        dc.set_upload_rate(client_ulrate)
+                if max_dlrate > 0:
+                    client_dlrate = int(max_dlrate / active)
+                    for d in filter(lambda x: x.active, downloads):
+                        dc = self.get_download_client(d.id)
+                        dc.set_download_rate(client_dlrate)
+                if max_conn > 0:
+                    client_conn = int(max_conn / active)
+                    for d in filter(lambda x: x.active, downloads):
+                        dc = self.get_download_client(d.id)
+                        dc.set_max_connections(client_conn)
 
     def get_downloads(self):
-        if self.downloads is None:
-            self.downloads = list(self.store.find(models.Download,
-                models.Download.deleted == False).order_by(models.Download.added))
-        return self.downloads
+        return list(self.store.find(models.Download,
+            models.Download.deleted == False).order_by(models.Download.added))
 
     def get_feeds(self):
         if self.feeds is None:
