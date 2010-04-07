@@ -82,6 +82,7 @@ def feed_parsed(parsed, feeds, manager, feed):
             item = models.FeedItem()
             item.feed_id = feed.id
             item.guid = e.id
+            item.removed = False
             manager.store.add(item)
 
         if do_update or item.updated != updated:
@@ -150,6 +151,7 @@ def feed_parsed(parsed, feeds, manager, feed):
             d.media_type = feed.media_type
             item.download = d
             manager.add_download(d)
+
 
         item_count += 1
         if feed.queue_size > 0 and item_count >= feed.queue_size:
@@ -223,7 +225,7 @@ def get_episode_definition(item):
                 ed.update(match.groupdict())
     if ed['d']:
         try:
-            ed['d'] = parsedate(ed['d'])
+            ed['d'] = parsedate(ed['d']).strftime('%Y-%m-%d')
         except Exception:
             ed['d'] = None
     return ed

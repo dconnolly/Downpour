@@ -390,6 +390,7 @@ def pattern_replace(pattern, values):
         if values[m] is None:
             pattern = pattern.replace('%' + m, '')
         else:
+            logging.debug(values[m])
             pattern = pattern.replace('%' + m, values[m])
     return pattern
 
