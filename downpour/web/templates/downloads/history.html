@@ -9,17 +9,21 @@
 					<td>Size</td>
 					<td>Type</td>
 					<td>Date</td>
+					{% if user.admin %}
 					<td>User</td>
+					{% endif %}
 				</tr>
 			</thead>
 			<tbody>
 			{% for dl in downloads %}
 				<tr>
 					<td>{{ dl.description }}</td>
-					<td>{{ dl.size|filesizeformat }}</td>
-					<td>{{ mediatypes[dl.media_type] }}</td>
-					<td>{{ dl.completed|timestampformat('%Y/%m/%d %H:%M') }}</td>
-					<td>{{ dl.user.username }}</td>
+					<td style="white-space: pre;">{{ dl.size|filesizeformat }}</td>
+					<td style="white-space: pre;">{{ mediatypes[dl.media_type] }}</td>
+					<td style="white-space: pre;">{{ dl.completed|timestampformat('%Y/%m/%d %H:%M') }}</td>
+					{% if user.admin %}
+					<td style="white-space: pre;">{{ dl.user.username }}</td>
+					{% endif %}
 				</tr>
 			{% endfor %}
 			</tbody>

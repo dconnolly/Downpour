@@ -198,18 +198,26 @@ class Bulk(common.AuthenticatedResource):
             finish(None)
         return server.NOT_DONE_YET
 
-class History(common.AdminResource):
+class History(common.AuthenticatedResource):
 
     def __init__(self):
-        common.AdminResource.__init__(self)
+        common.AuthenticatedResource.__init__(self)
         self.putChild('', self)
 
     def render_GET(self, request):
         manager = self.get_manager(request)
-        downloads = manager.store.find(models.Download,
-            models.Download.completed > 0
-            ).order_by(expr.Desc(models.Download.completed))
-        context = {'title': 'Download History',
+        user = self.get_user(request)
+        downloads = None
+        if user.admin:
+            downloads = manager.store.find(models.Download,
+                models.Download.completed > 0
+                ).order_by(expr.Desc(models.Download.completed))[:30]
+        else:
+            downloads = manager.store.find(models.Download,
+                models.Download.completed > 0,
+                models.Download.user == user
+                ).order_by(expr.Desc(models.Download.completed))[:30]
+        context = {'title': 'Last 30 Downloads',
                    'downloads': downloads,
                    'mediatypes': organizer.get_media_types()}
         return self.render_template('downloads/history.html', request, context)
