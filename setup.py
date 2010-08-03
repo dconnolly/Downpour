@@ -20,5 +20,6 @@ setup(name="Downpour",
     include_package_data=True,
     # Not zip-safe until /media/ handler is rewritten
     zip_safe=False,
+    scripts=['bin/downpourd', 'bin/downpour-remote'],
     install_requires=['Twisted-Core>=8.2.0', 'Twisted-Web>=8.2.0', 'FeedParser>=4.1', 'python-dateutil>=1.4.1']
 )
