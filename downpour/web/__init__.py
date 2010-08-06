@@ -87,15 +87,16 @@ class WebInterfacePlugin(Plugin):
         return '%s%d:%.2d:%.2d' % (daystr, hours, minutes, seconds)
 
     def workinglink(self, file, download):
-        realpath = self.application.manager.get_work_directory(download) + '/' + file
+        encfile = file.decode('utf8');
+        realpath = self.application.manager.get_work_directory(download) + '/' + encfile
         if os.access(realpath, os.R_OK):
-            return '<a target="_blank" href="/work/dldir%d/%s">%s</a>' % (download.id, file, file)
+            return '<a target="_blank" href="/work/dldir%d/%s">%s</a>' % (download.id, encfile, encfile)
         else:
-            return file
+            return encfile
 
     def librarylink(self, file):
         user = file.user
-        fileparts = file.filename.split('/')
+        fileparts = file.filename.decode('utf8').split('/')
         parents = []
         if file.directory:
             parents.append(file.directory)

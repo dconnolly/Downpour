@@ -116,10 +116,7 @@ class HTTPManagedDownloader(HTTPDownloader):
         self.bucketFilter.rate = rate
 
     def renameFile(self, newName):
-        logging.debug(self.fileName)
-        logging.debug(newName)
         fullName = os.path.sep.join((os.path.dirname(self.fileName),newName))
-        logging.debug(fullName)
         # Only override filename if we're not resuming a download
         if not self.requestedPartial or not os.path.exists(self.fileName):
             self.fileName = fullName

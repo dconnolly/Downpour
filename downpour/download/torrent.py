@@ -38,8 +38,11 @@ class LibtorrentManager:
         self.limit_update.start(5.0)
 
     def status_update(self):
-        for t in self.torrents:
-            self.torrents[t].update_status()
+        try:
+            for t in self.torrents:
+                self.torrents[t].update_status()
+        except Exception as e:
+            pass
 
     def limit_update(self):
         if self.limits_updated:
@@ -288,6 +291,7 @@ class LibtorrentClient(DownloadClient):
     def update_status(self):
         if self.torrent and self.torrent.is_valid():
             status = self.torrent.status()
+            paused = self.torrent.is_paused()
             self.download.size = status.total_wanted
             self.download.downloaded = int(status.total_wanted_done)
             self.download.downloadrate = float(status.download_payload_rate)
@@ -332,7 +336,7 @@ class LibtorrentClient(DownloadClient):
             tstate = states[status.state]
             if tstate == Status.SEEDING:
                 self.check_finished()
-                if self.torrent.is_paused():
+                if paused:
                     tstate = Status.COMPLETED
             if self.download.active and not self.manager.paused:
                 self.download.status = tstate

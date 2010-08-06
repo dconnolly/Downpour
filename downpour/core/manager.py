@@ -119,7 +119,7 @@ class Manager:
 
         return d.id
 
-    def get_downloads(self):
+    def get_downloads(self, flush=False):
         if not self.downloads is None:
             return self.downloads
         raise NotImplementedError('Manager must be subclassed')
@@ -178,8 +178,9 @@ class Manager:
             dc.remove()
             Manager.download_clients.remove(dc)
         d.deleted = True
-        self.get_downloads().remove(d)
         self.store.commit()
+        # Flush delete items out of local cache
+        self.get_downloads(True)
         try:
             if remove_files:
                 workdir = self.get_work_directory(d)
@@ -456,7 +457,7 @@ class GlobalManager(Manager):
                         dc = self.get_download_client(d.id)
                         dc.set_max_connections(client_conn)
 
-    def get_downloads(self):
+    def get_downloads(self, flush=False):
         return list(self.store.find(models.Download,
             models.Download.deleted == False).order_by(models.Download.added))
 
@@ -475,12 +476,12 @@ class UserManager(Manager):
         d.user = self.user
         Manager.add_download(self, d)
 
-    def get_downloads(self):
+    def get_downloads(self, flush=False):
         if self.user.admin:
             return list(self.store.find(models.Download,
                 models.Download.deleted == False
                 ).order_by(models.Download.added))
-        elif self.downloads is None:
+        elif self.downloads is None or flush:
             self.downloads = list(self.store.find(models.Download,
                 models.Download.deleted == False,
                 models.Download.user_id == self.user.id
