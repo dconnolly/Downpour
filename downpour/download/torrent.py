@@ -4,7 +4,7 @@ from twisted.internet import defer, task, reactor
 from twisted.web import client
 from twisted.python import failure
 import libtorrent as lt
-import os, marshal, math, sys
+import os, marshal, math, sys, socket, logging, fcntl, struct
 
 class LibtorrentManager:
 
@@ -125,6 +125,34 @@ class LibtorrentClient(DownloadClient):
         self.torrent = None
         self.dfm = {}
         self.autostop = True
+
+        # Set comm interface (useful for routing torrent traffic 
+        interface = manager.get_option(('downpour', 'interface'))
+        logging.debug('Interface: %s' % interface)
+        if not interface is None:
+            try:
+                ip = socket.gethostbyname(interface)
+                # Verify we got an IP
+                socket.inet_aton(ip)
+                lt_manager.session.listen_on(6881, 6891, ip)
+            except socket.error:
+                # Probably specified a local interface name
+                try:
+                    ip = self.get_ip_address(interface)
+                    socket.inet_aton(ip)
+                    lt_manager.session.listen_on(6881, 6891, ip)
+                except socket.error:
+                    pass
+
+        logging.debug(lt_manager.session.listen_port())
+
+    def get_ip_address(self, ifname):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15])
+        )[20:24])
 
     def start(self):
         if 'state_changed_alert' in self.dfm:
