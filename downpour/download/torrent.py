@@ -79,7 +79,7 @@ class LibtorrentManager:
             sys.stdout.flush()
             alert_type = str(type(alert)).split("'")[1].split(".")[-1]
             if not (hasattr(alert, 'handle') and self.dispatch_alert(alert, alert_type)):
-                # print("GLOBAL: %s: %s" % (alert_type, alert.message()))
+                print("GLOBAL: %s: %s" % (alert_type, alert.message()))
                 pass
             alert = self.session.pop_alert()
 
@@ -106,6 +106,33 @@ class LibtorrentManager:
                 self.session.remove_torrent(t.torrent, 1)
                 del self.torrents[ih]
 
+    # Set comm interface (useful for routing torrent traffic over VPN, etc)
+    def rebind(self, interface=None):
+        if not interface is None:
+            try:
+                ip = socket.gethostbyname(interface)
+                # Verify we got an IP
+                socket.inet_aton(ip)
+                self.session.listen_on(6881, 6891, ip)
+            except socket.error:
+                # Probably specified a local interface name
+                try:
+                    ip = self.get_ip_address(interface)
+                    # Verify we got an IP
+                    socket.inet_aton(ip)
+                    self.session.listen_on(6881, 6891, ip)
+                except socket.error:
+                    self.session.listen_on(6881, 6891)
+
+    # Get the IP assigned to an interface name on linux
+    def get_ip_address(self, ifname):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        return socket.inet_ntoa(fcntl.ioctl(
+            s.fileno(),
+            0x8915,  # SIOCGIFADDR
+            struct.pack('256s', ifname[:15])
+        )[20:24])
+
 # Single session manager
 lt_manager = LibtorrentManager()
 
@@ -125,36 +152,14 @@ class LibtorrentClient(DownloadClient):
         self.torrent = None
         self.dfm = {}
         self.autostop = True
+        self.rebind();
 
-        # Set comm interface (useful for routing torrent traffic 
-        interface = manager.get_option(('downpour', 'interface'))
-        logging.debug('Interface: %s' % interface)
-        if not interface is None:
-            try:
-                ip = socket.gethostbyname(interface)
-                # Verify we got an IP
-                socket.inet_aton(ip)
-                lt_manager.session.listen_on(6881, 6891, ip)
-            except socket.error:
-                # Probably specified a local interface name
-                try:
-                    ip = self.get_ip_address(interface)
-                    socket.inet_aton(ip)
-                    lt_manager.session.listen_on(6881, 6891, ip)
-                except socket.error:
-                    pass
-
-        logging.debug(lt_manager.session.listen_port())
-
-    def get_ip_address(self, ifname):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        return socket.inet_ntoa(fcntl.ioctl(
-            s.fileno(),
-            0x8915,  # SIOCGIFADDR
-            struct.pack('256s', ifname[:15])
-        )[20:24])
+    # Set comm interface (useful for routing torrent traffic over VPN, etc)
+    def rebind(self):
+        lt_manager.rebind(self.manager.get_option(('downpour', 'interface')))
 
     def start(self):
+        # TODO: recheck listening interface; may need to rebind manager to renewed IP
         if 'state_changed_alert' in self.dfm:
             raise Exception('An operation is already in progress')
         self.dfm['state_changed_alert'] = defer.Deferred()
