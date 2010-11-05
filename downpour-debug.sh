@@ -7,6 +7,4 @@ if test ! -e "debug"; then
 	mkdir debug/user-dir
 	mkdir debug/work-dir
 fi
-export PYTHONPATH=$PWD
-echo $PYTHONPATH
-python bin/downpourd -c cfg/debug.cfg -d
+PYTHONPATH=. bin/downpourd -c cfg/debug.cfg -d
