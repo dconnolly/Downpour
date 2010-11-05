@@ -79,7 +79,7 @@ class LibtorrentManager:
             sys.stdout.flush()
             alert_type = str(type(alert)).split("'")[1].split(".")[-1]
             if not (hasattr(alert, 'handle') and self.dispatch_alert(alert, alert_type)):
-                print("GLOBAL: %s: %s" % (alert_type, alert.message()))
+                #print("GLOBAL: %s: %s" % (alert_type, alert.message()))
                 pass
             alert = self.session.pop_alert()
 
@@ -107,25 +107,34 @@ class LibtorrentManager:
                 del self.torrents[ih]
 
     # Set comm interface (useful for routing torrent traffic over VPN, etc)
-    def rebind(self, interface=None):
+    def listen(self, interface=None):
+        ip = self.get_interface(interface)
+        if not ip is None:
+            self.session.listen_on(6881, 6891, ip)
+        else:
+            self.session.listen_on(6881, 6891)
+
+    # Set comm interface (useful for routing torrent traffic over VPN, etc)
+    def get_interface(self, interface):
         if not interface is None:
             try:
                 ip = socket.gethostbyname(interface)
                 # Verify we got an IP
                 socket.inet_aton(ip)
-                self.session.listen_on(6881, 6891, ip)
+                return ip
             except socket.error:
                 # Probably specified a local interface name
                 try:
-                    ip = self.get_ip_address(interface)
+                    ip = self.get_device_ip(interface)
                     # Verify we got an IP
                     socket.inet_aton(ip)
-                    self.session.listen_on(6881, 6891, ip)
+                    return ip
                 except socket.error:
-                    self.session.listen_on(6881, 6891)
+                    pass
+        return None
 
     # Get the IP assigned to an interface name on linux
-    def get_ip_address(self, ifname):
+    def get_device_ip(self, ifname):
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         return socket.inet_ntoa(fcntl.ioctl(
             s.fileno(),
@@ -152,11 +161,19 @@ class LibtorrentClient(DownloadClient):
         self.torrent = None
         self.dfm = {}
         self.autostop = True
-        self.rebind();
 
     # Set comm interface (useful for routing torrent traffic over VPN, etc)
     def rebind(self):
-        lt_manager.rebind(self.manager.get_option(('downpour', 'interface')))
+
+        interface = self.manager.get_option(('downpour', 'interface'))
+        try:
+            ip = lt_manager.get_interface(interface)
+        except Exception as e:
+            raise Exception('The specified network interface is not available')
+            
+        lt_manager.listen(interface)
+        if not self.torrent is None and not ip is None:
+            self.torrent.use_interface(ip)
 
     def start(self):
         # TODO: recheck listening interface; may need to rebind manager to renewed IP
@@ -187,18 +204,23 @@ class LibtorrentClient(DownloadClient):
         if not self.torrent_info:
             self.torrent_info = lt.torrent_info(lt.bdecode(self.download.metadata))
             self.download.description = unicode(self.torrent_info.name())
-        if not self.torrent:
-            try:
+        try:
+            if not self.torrent:
                 resdata = None
                 if self.download.resume_data:
                     resdata = marshal.loads(self.download.resume_data)
                 self.torrent = lt_manager.add_torrent(self, self.torrent_info, self.directory, resume_data=resdata)
                 self.torrent.auto_managed(True)
-            except Exception as e:
-                dfr = self.dfm['state_changed_alert']
-                del self.dfm['state_changed_alert']
-                dfr.errback(failure.Failure(e))
-                return dfr
+            self.rebind()
+        except Exception as e:
+            dfr = self.dfm['state_changed_alert']
+            del self.dfm['state_changed_alert']
+            if self.torrent:
+                self.torrent.auto_managed(False)
+                self.torrent.pause()
+                self.torrent.save_resume_data()
+            dfr.errback(failure.Failure(e))
+            return dfr
         self.torrent.resume()
         return self.dfm['state_changed_alert']
 
@@ -230,7 +252,7 @@ class LibtorrentClient(DownloadClient):
             del self.dfm[alert_type]
 
     def handle_alert(self, alert, alert_type):
-        # print("TORRENT: %s: %s" % (alert_type, alert.message()))
+        #print("TORRENT: %s: %s" % (alert_type, alert.message()))
         if alert_type == 'torrent_resumed_alert':
             alert_type = 'state_changed_alert'
         if alert_type == 'torrent_finished_alert':
@@ -255,10 +277,15 @@ class LibtorrentClient(DownloadClient):
             self.update_status()
         elif alert_type == 'tracker_error_alert':
             self.update_status()
+        elif alert_type == 'scrape_failed_alert':
+            # Only alert I can find that provides warning of a network interface going down
+            self.rebind()
 
         if alert_type in self.dfm:
             self.dfm[alert_type].callback(self)
             del self.dfm[alert_type]
+
+        return True
 
     def remove(self):
         self.dfm['state_changed_alert'] = defer.Deferred()

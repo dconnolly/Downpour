@@ -7,8 +7,8 @@ from storm.locals import Store, create_database
 class Application:
 
     options = {
-        'config': [os.path.expanduser('~/.config/downpour/downpour.cfg'),
-                   '/etc/downpour.cfg'],
+        'config': ['/etc/downpour.cfg',
+            os.path.expanduser('~/.config/downpour/downpour.cfg')],
         'downpour': {
             'state': os.path.expanduser('~/.config/downpour/downpour.db'),
             'log': 'info',
@@ -21,6 +21,7 @@ class Application:
     }
 
     def __init__(self, options=None):
+
         self.store = None
         self.manager = None
         self.plugins = []
@@ -28,7 +29,7 @@ class Application:
         # Load configuration from file
         config = Application.options['config']
         if options and options.has_key('config'):
-            config.insert(0, os.path.expanduser(options['config']))
+            config.append(os.path.expanduser(options['config']))
         self.options['config'] = config
         cfgparser = ConfigParser.RawConfigParser()
         cfgparser.read(config)
