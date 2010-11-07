@@ -95,6 +95,10 @@ class WebInterfacePlugin(Plugin):
             return encfile
 
     def librarylink(self, file):
+
+        if file.filename is None:
+            return None
+
         user = file.user
         fileparts = file.filename.decode('utf8').split('/')
         parents = []

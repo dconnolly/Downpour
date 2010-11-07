@@ -196,10 +196,10 @@ def process_download(manager, download, client):
             f.user = download.user
             f.download = download
             f.directory = None
-            f.filename = unicode(file['path'])
+            f.filename = file['path'].decode('utf8')
             f.size = file['size']
             f.media_type = download.media_type
-            f.original_filename = unicode(file['path'])
+            f.original_filename = file['path'].decode('utf8')
             f.added = time()
             download.files.add(f)
         dfr = import_files(download, manager, library, firstRun=True)
