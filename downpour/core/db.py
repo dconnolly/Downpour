@@ -55,6 +55,7 @@ def initialize_db(store):
         "active BOOLEAN," +
         "auto_clean BOOLEAN," +
         "last_update INTEGER," +
+        "last_check INTEGER," +
         "last_error TEXT," +
         "update_frequency INTEGER," +
         "queue_size INTEGER," +
