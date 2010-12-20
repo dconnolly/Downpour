@@ -2,7 +2,8 @@ from twisted.protocols import amp
 from downpour.remote import types
 
 class Auth(amp.Command):
-    arguments = [('password', amp.Unicode())]
+    arguments = [('username', amp.Unicode()),
+                ('password', amp.Unicode())]
     response = [('result', amp.Boolean())]
     errors = {Exception: 'EXCEPTION'}
 

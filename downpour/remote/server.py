@@ -6,16 +6,16 @@ import logging
 
 class ServerProtocol(amp.AMP):
 
-    authorized = False
+    user = None
     plugin = None
 
     def check_auth(self):
-        if not self.authorized:
+        if not self.user:
             raise Exception('Not authorized, login required')
 
-    def auth(self, password): 
-        self.authorized = (password == self.plugin.config['password'])
-        return {'result': self.authorized}
+    def auth(self, username, password): 
+        self.user = self.factory.application.get_user(username, password)
+        return {'result': self.user is not None}
 
     commands.Auth.responder(auth)
     
@@ -36,7 +36,10 @@ class ServerProtocol(amp.AMP):
 
     def torrent_add_file(self, data):
         self.check_auth()
-        return {'result': self.factory.application.manager.add_torrent_raw(data)}
+        d = models.Download()
+        d.mime_type = 'application/x-bittorrent'
+        d.metadata = data
+        return {'result': self.factory.application.manager.add_download(d)}
 
     commands.TorrentAddFile.responder(torrent_add_file)
 
