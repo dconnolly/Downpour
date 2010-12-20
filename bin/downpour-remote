@@ -116,7 +116,7 @@ def commandSuccess(result, command, p):
 
 def fatalError(failure):
     print failure.getErrorMessage()
-    failure.printTraceback()
+    #failure.printTraceback()
     reactor.stop()
 
 # Listen for manager connections)

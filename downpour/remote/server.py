@@ -7,13 +7,14 @@ import logging
 class ServerProtocol(amp.AMP):
 
     authorized = False
+    plugin = None
 
     def check_auth(self):
         if not self.authorized:
             raise Exception('Not authorized, login required')
 
     def auth(self, password): 
-        self.authorized = (password == self.config['password'])
+        self.authorized = (password == self.plugin.config['password'])
         return {'result': self.authorized}
 
     commands.Auth.responder(auth)
@@ -159,14 +160,12 @@ class ServerProtocol(amp.AMP):
                 'name': f.name,
                 'url': f.url,
                 'media_type': f.media_type,
-                'series': f.series_id,
                 'active': f.active,
                 'last_update': f.last_update,
                 'last_error': f.last_error,
                 'update_frequency': f.update_frequency,
                 'download_directory': f.download_directory,
                 'rename_pattern': f.rename_pattern,
-                'match_pattern': f.match_pattern,
                 } for f in feeds ]}
 
     commands.FeedList.responder(feed_list)
@@ -181,15 +180,13 @@ class ServerProtocol(amp.AMP):
                     'name': f.name,
                     'url': f.url,
                     'media_type': f.media_type,
-                    'series': f.series_id,
                     'active': f.active,
                     'last_update': f.last_update,
                     'last_error': f.last_error,
                     'update_frequency': f.update_frequency,
                     'download_directory': f.download_directory,
                     'rename_pattern': f.rename_pattern,
-                    'match_pattern': f.match_pattern,
-                    'active_downloads': [{'id': d.id, 'name': d.name} for d in downloads]
+                    'active_downloads': [{'id': d.id, 'name': d.description} for d in downloads]
             }}
 
     commands.FeedInfo.responder(feed_info)
