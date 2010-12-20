@@ -21,7 +21,7 @@ class ServerProtocol(amp.AMP):
     
     def status(self):
         self.check_auth()
-        status = self.factory.application.manager.get_status()
+        status = self.factory.application.get_manager(self.user).get_status()
         return {'result': status}
 
     commands.Status.responder(status)
@@ -30,22 +30,23 @@ class ServerProtocol(amp.AMP):
         self.check_auth()
         d = models.Download()
         d.url = url
-        return {'result': self.factory.application.manager.add_download(d)}
+        return {'result': self.factory.application.get_manager(self.user).add_download(d)}
 
     commands.DownloadAdd.responder(download_add)
 
     def torrent_add_file(self, data):
+        logging.debug(data)
         self.check_auth()
         d = models.Download()
         d.mime_type = u'application/x-bittorrent'
         d.metadata = data
-        return {'result': self.factory.application.manager.add_download(d)}
+        return {'result': self.factory.application.get_manager(self.user).add_download(d)}
 
     commands.TorrentAddFile.responder(torrent_add_file)
 
     def download_list(self):
         self.check_auth()
-        m = self.factory.application.manager
+        m = self.factory.application.get_manager(self.user)
         downloads = m.get_downloads()
 
         return {'result': [{
@@ -84,7 +85,7 @@ class ServerProtocol(amp.AMP):
 
     def download_info(self, id):
         self.check_auth()
-        m = self.factory.application.manager
+        m = self.factory.application.get_manager(self.user)
         d = m.get_download(id)
         dc = m.get_download_client(id)
         return {'result': {
@@ -126,7 +127,7 @@ class ServerProtocol(amp.AMP):
 
     def download_control(self, id, action):
         self.check_auth()
-        m = self.factory.application.manager
+        m = self.factory.application.get_manager(self.user)
         actions = {
             'stop': m.pause_download,
             'start': m.resume_download,
@@ -140,7 +141,7 @@ class ServerProtocol(amp.AMP):
 
     def download_remove(self, id):
         self.check_auth()
-        return {'result': self.factory.application.manager.remove_download(id)}
+        return {'result': self.factory.application.get_manager(self.user).remove_download(id)}
 
     commands.DownloadRemove.responder(download_remove)
 
@@ -150,13 +151,13 @@ class ServerProtocol(amp.AMP):
         f.url = url
         f.name = name
         f.media_type = media_type
-        return {'result': self.factory.application.manager.add_feed(f)}
+        return {'result': self.factory.application.get_manager(self.user).add_feed(f)}
 
     commands.FeedAdd.responder(feed_add)
 
     def feed_list(self):
         self.check_auth()
-        m = self.factory.application.manager
+        m = self.factory.application.get_manager(self.user)
         feeds = m.get_feeds()
         return {'result': [
                 {'id': f.id,
@@ -175,7 +176,7 @@ class ServerProtocol(amp.AMP):
 
     def feed_info(self, id):
         self.check_auth()
-        m = self.factory.application.manager
+        m = self.factory.application.get_manager(self.user)
         f = m.get_feed(id)
         downloads = self.factory.application.get_store().find(models.Download, models.Download.feed_id==f.id)
         return {'result': {
@@ -196,7 +197,7 @@ class ServerProtocol(amp.AMP):
 
     def feed_update(self, id, values):
         self.check_auth()
-        m = self.factory.application.manager
+        m = self.factory.application.get_manager(self.user)
         f = m.get_feed(id)
         # TODO: update object from dict
         return {'result': True}
@@ -205,6 +206,6 @@ class ServerProtocol(amp.AMP):
 
     def feed_remove(self, id):
         self.check_auth()
-        return {'result': self.factory.application.manager.remove_feed(id)}
+        return {'result': self.factory.application.get_manager(self.user).remove_feed(id)}
 
     commands.FeedRemove.responder(feed_remove)
