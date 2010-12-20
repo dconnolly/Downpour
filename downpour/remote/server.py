@@ -35,7 +35,6 @@ class ServerProtocol(amp.AMP):
     commands.DownloadAdd.responder(download_add)
 
     def torrent_add_file(self, data):
-        logging.debug(data)
         self.check_auth()
         d = models.Download()
         d.mime_type = u'application/x-bittorrent'
