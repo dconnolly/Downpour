@@ -217,6 +217,7 @@ class History(common.AuthenticatedResource):
                 models.Download.completed > 0,
                 models.Download.user == user
                 ).order_by(expr.Desc(models.Download.completed))[:30]
+
         context = {'title': 'Last 30 Downloads',
                    'downloads': downloads,
                    'mediatypes': organizer.get_media_types()}

@@ -1,5 +1,8 @@
-from downpour.core import models, VERSION
+from downpour.core import models, sqlitefk, VERSION
 from storm.locals import *
+#import sys
+#from storm.tracer import debug
+#debug(True, stream=sys.stdout)
 
 def initialize_db(store):
 
@@ -93,6 +96,9 @@ def initialize_db(store):
         "FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE"
         ")")
 
+    store.execute("CREATE INDEX downloads_completed on downloads(completed)")
+    store.execute("CREATE INDEX downloads_deleted on downloads(deleted)")
+
     store.execute("CREATE TABLE feed_items (" +
         "id INTEGER PRIMARY KEY," +
         "feed_id INTEGER," +
@@ -106,6 +112,9 @@ def initialize_db(store):
         "FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE,"
         "FOREIGN KEY(download_id) REFERENCES downloads(id) ON DELETE SET NULL ON UPDATE CASCADE"
         ")")
+
+    store.execute("CREATE INDEX feed_items_updated on feed_items(updated)")
+    store.execute("CREATE INDEX feed_items_updated on feed_items(removed)")
 
     store.execute("CREATE TABLE files (" +
         "id INTEGER PRIMARY KEY," +

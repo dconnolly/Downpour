@@ -94,11 +94,13 @@
 						<option {% if feed.queue_size == 10 %}selected{% endif %}
 							value="10">10 items</option>
 						<option {% if feed.queue_size == -1 %}selected{% endif %}
-							value="-1">1 full season</option>
+							value="-1">Current season only</option>
 						<option {% if feed.queue_size == -2 %}selected{% endif %}
-							value="-2">2 full seasons</option>
+							value="-2">1 full season</option>
 						<option {% if feed.queue_size == -3 %}selected{% endif %}
-							value="-3">3 full seasons</option>
+							value="-3">2 full seasons</option>
+						<option {% if feed.queue_size == -4 %}selected{% endif %}
+							value="-4">3 full seasons</option>
 					</select>
 				</td>
 			</tr>

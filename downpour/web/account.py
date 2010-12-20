@@ -1,6 +1,7 @@
 from downpour.core import models
 from downpour.web import common, auth
 from twisted.web import server
+import hashlib
 
 class Root(common.AuthenticatedResource):
 
@@ -32,8 +33,7 @@ class Login(common.Resource):
         password = unicode(request.args['password'][0]);
         user = request.application.get_user(username, password)
         if user:
-            account = request.getSession(auth.IAccount)
-            account.user = user
+            self.set_user(user, request)
             redirect = '/'
             """
             if 'redirect' in request.args and not request.args['redirect'][0].startswith('/account'):
@@ -49,8 +49,7 @@ class Login(common.Resource):
 class Logout(common.Resource):
 
     def render_GET(self, request):
-        account = request.getSession(auth.IAccount)
-        account.user = None
+        self.set_user(None, request);
         context = {'title': 'Login', 'message': 'You have been logged out.'}
         return self.render_template('account/login.html', request, context)
 

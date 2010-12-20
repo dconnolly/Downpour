@@ -1,7 +1,7 @@
 from twisted.web import resource, server, error
-from downpour.core import VERSION
+from downpour.core import VERSION, models
 import auth
-import os
+import os, hashlib, logging
 
 def requestFactory(plugin):
     def factory(*args, **kwargs):
@@ -50,7 +50,26 @@ class Resource(resource.Resource):
         return True
 
     def get_user(self, request):
-        return request.getSession(auth.IAccount).user
+        account = request.getSession(auth.IAccount)
+        if not account.user:
+            userinfo = request.getCookie('DOWNPOUR_USER');
+            if userinfo is not None:
+                (userid, userhash) = userinfo.split(':', 1)
+                user = request.application.get_store().find(models.User,
+                    models.User.id == int(userid)).one()
+                comphash = hashlib.md5('%s:%s' % (user.username, user.password)).hexdigest();
+                if userhash == comphash:
+                    account.user = user
+        return account.user
+
+    def set_user(self, user, request):
+        account = request.getSession(auth.IAccount)
+        if user is not None:
+            userhash = hashlib.md5('%s:%s' % (user.username, user.password)).hexdigest()
+            request.addCookie('DOWNPOUR_USER', '%s:%s' % (user.id, userhash), path='/')
+        else:
+            request.addCookie('DOWNPOUR_USER', None, path='/', expires=-1)
+        account.user = user
 
     def get_manager(self, request):
         user = self.get_user(request)

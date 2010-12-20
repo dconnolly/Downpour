@@ -47,6 +47,7 @@ def feed_parsed(parsed, feeds, manager, feed):
     has_new = False
     item_count = 0
     latest_season = 1
+    latest_episode = 1
     seen_items = []
 
     # Prime previously-seen item map to avoid duplicate downloads
@@ -57,6 +58,10 @@ def feed_parsed(parsed, feeds, manager, feed):
         seen_items.append(epdef)
         if epdef['s'] and int(epdef['s']) > latest_season:
             latest_season = int(epdef['s'])
+            latest_episode = 1
+        if epdef['s'] and int(epdef['s']) == latest_season:
+            if epdef['e'] and int(epdef['e']) > latest_episode:
+                latest_episode = int(epdef['e'])
 
     for e in items:
         do_update = False
@@ -165,31 +170,65 @@ def feed_parsed(parsed, feeds, manager, feed):
 
     # Remove old downloads
     if feed.queue_size != 0:
+
         items = manager.store.find(models.FeedItem,
             models.FeedItem.feed_id == feed.id,
             models.FeedItem.removed == False
             ).order_by(expr.Desc(models.FeedItem.updated))
+
         remove = []
+
         if feed.queue_size > 0:
-            if items.count() > feed.queue_size:
-                remove = items[feed.queue_size:]
-        elif feed.queue_size < 0:
-            # less than zero means last abs(x) full seasons
+            episodect = 0
+            last_season = 0
+            last_date = ''
+            last_episode = 0
             for i in items:
-                ed = get_episode_definition(i)
-                if (ed['s']):
-                    season = int(ed['s'])
-                    if season > 0 and season < (latest_season + feed.queue_size):
-                        remove.append(i)
+                if i.download:
+                    ed = get_episode_definition(i)
+                    if ed['s'] is not None and ed['e'] is not None:
+                        if last_season != int(ed['s']) and last_episode != int(ed['e']):
+                            episodect = episodect + 1
+                            if episodect > feed.queue_size:
+                                remove.append(i)
+                        else:
+                            last_season = int(ed['s'])
+                            last_episode = int(ed['e'])
+                            i.removed = True
+                    elif ed['d'] is not None:
+                        if last_date != ed['d']:
+                            episodect = episodect + 1
+                            if episodect > feed.queue_size:
+                                remove.append(i)
+                        else:
+                            last_date = ed['d']
+                            i.removed = True
+                    else:
+                        episodect = episodect + 1
+                        if episodect > feed.queue_size:
+                            remove.append(i)
+                else:
+                    i.removed = True
+
+        elif feed.queue_size < 0:
+            for i in items:
+                if i.download:
+                    ed = get_episode_definition(i)
+                    if (ed['s']):
+                        season = int(ed['s'])
+                        if season > 0 and season < (latest_season + (feed.queue_size + 1)):
+                            remove.append(i)
+                else:
+                    i.removed = True
+
         for i in remove:
             logging.debug('Removing old feed item %d (%s)' % (i.id, i.title))
-            if i.download:
-                for f in i.download.files:
-                    realpath = '/'.join(
-                        (manager.get_library_directory(feed.user),
-                            file.directory, file.filename))
-                    if organizer.remove_file(realpath, True):
-                        i.download.files.remove(f)
+            for f in i.download.files:
+                realdir = '/'.join(
+                    (manager.get_library_directory(), f.directory))
+                realpath = '/'.join((realdir, f.filename))
+                if organizer.remove_file(realpath, True):
+                    i.download.files.remove(f)
             i.removed = True
 
     manager.store.commit()

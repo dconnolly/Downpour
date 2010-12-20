@@ -174,6 +174,8 @@ class Inject(common.AuthenticatedResource):
                 d.media_type = self.feed.media_type
                 item.download = d
                 manager.add_download(d)
+                item.removed = False
+                manager.store.commit()
                 request.redirect('/downloads')
                 request.finish()
                 return server.NOT_DONE_YET
