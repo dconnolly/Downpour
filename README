@@ -1,4 +1,4 @@
-Downpour v0.1
+Downpour v0.2
 -------------
 Created by Jeremy Jongsma (jeremy@jongsma.org)
 
@@ -7,6 +7,7 @@ MODULE DEPENDENCIES (tested version):
 	- twisted (8.2.0+) 	
 	- libtorrent (0.14.2+)
 	- feedparser (4.1+)
+	- jinja2 (2.5+)
 	- dateutil (1.4.1+)
 	- storm (0.14+)
 
@@ -15,9 +16,9 @@ INSTALLATION:
 	1.  Download and install libtorrent from
 		http://sourceforge.net/projects/libtorrent/files/
 
-	2.	Run the following command as root:
+	2.	Run the following command:
 
-			python setup.py install
+			sudo python setup.py install
 
 		If you do not have root access, you can install it in
 		your user directory with:
