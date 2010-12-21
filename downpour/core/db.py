@@ -1,5 +1,6 @@
 from downpour.core import models, sqlitefk, VERSION
 from storm.locals import *
+import logging
 #import sys
 #from storm.tracer import debug
 #debug(True, stream=sys.stdout)
@@ -114,7 +115,7 @@ def initialize_db(store):
         ")")
 
     store.execute("CREATE INDEX feed_items_updated on feed_items(updated)")
-    store.execute("CREATE INDEX feed_items_updated on feed_items(removed)")
+    store.execute("CREATE INDEX feed_items_removed on feed_items(removed)")
 
     store.execute("CREATE TABLE files (" +
         "id INTEGER PRIMARY KEY," +
@@ -140,3 +141,48 @@ def initialize_db(store):
     store.execute("INSERT INTO users(username, password, admin) VALUES ('user', 'password', 0)")
 
     store.commit()
+
+def upgrade_database(application):
+    version = application.get_store().find(models.State,
+        models.State.name == u'schema_version').one().value
+    if version != VERSION and VERSION in schema_upgraders:
+        return schema_upgraders[VERSION](application, version)
+    return False
+
+def upgrade_to_0_2(application, version):
+    upgraded = True
+    if version != '0.1.1':
+        upgraded = upgrade_to_0_1_1(application, version)
+    if upgraded:
+        logging.debug('Upgrading database from v0.1.1 to v0.2')
+        store = application.get_store()
+        store.execute("CREATE INDEX downloads_completed on downloads(completed)")
+        store.execute("CREATE INDEX downloads_deleted on downloads(deleted)")
+        store.execute("CREATE INDEX feed_items_updated on feed_items(updated)")
+        store.execute("CREATE INDEX feed_items_removed on feed_items(removed)")
+        store.execute("UPDATE STATE SET value = '0.2' WHERE name = 'schema_version'")
+    return upgraded
+
+def upgrade_to_0_1_1(application, version):
+    upgraded = True
+    if version != '0.1.1pre':
+        upgraded = upgrade_to_0_1_1pre(application, version)
+    if upgraded:
+        logging.debug('Upgrading database from v0.1.1pre to v0.1.1')
+        application.get_store().execute("UPDATE STATE SET value = '0.1.1' WHERE name = 'schema_version'")
+        pass
+    return upgraded
+
+def upgrade_to_0_1_1pre(application, version):
+    if version != '0.1':
+        return False
+    logging.debug('Upgrading database from v0.1 to v0.1.1pre')
+    application.get_store().execute("UPDATE STATE SET value = '0.1.1pre' WHERE name = 'schema_version'")
+    return True
+
+# Add new upgraders to this dict
+schema_upgraders = {
+    '0.2': upgrade_to_0_2,
+    '0.1.1': upgrade_to_0_1_1,
+    '0.1.1pre': upgrade_to_0_1_1pre
+}

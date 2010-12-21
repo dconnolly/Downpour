@@ -21,5 +21,5 @@ setup(name="Downpour",
     # Not zip-safe until /media/ handler is rewritten
     zip_safe=False,
     scripts=['bin/downpourd', 'bin/downpour-remote'],
-    install_requires=['Twisted-Core>=8.2.0', 'Twisted-Web>=8.2.0', 'FeedParser>=4.1', 'python-dateutil>=1.4.1']
+    install_requires=['Twisted-Core>=8.2.0', 'Twisted-Web>=8.2.0', 'jinja2>=2.5.0', 'storm>=0.14', 'FeedParser>=4.1', 'python-dateutil>=1.4.1']
 )

@@ -159,6 +159,7 @@ class Application:
             self.store = Store(database)
             if need_init:
                 db.initialize_db(self.store)
+            db.upgrade_database(self)
         return self.store
 
     def get_user(self, username, password):
