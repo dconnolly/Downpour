@@ -474,7 +474,7 @@ class UserManager(Manager):
 
     def add_download(self, d):
         d.user = self.user
-        Manager.add_download(self, d)
+        return Manager.add_download(self, d)
 
     def get_downloads(self, flush=False):
         if self.user.admin:
