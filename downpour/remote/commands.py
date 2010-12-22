@@ -27,7 +27,7 @@ class DownloadAdd(amp.Command):
 
 class TorrentAddFile(amp.Command):
     arguments = [('data', amp.String()),
-        ('type', amp.String())]
+        ('type', amp.Unicode())]
     response = [('result', amp.Integer())]
     errors = {Exception: 'EXCEPTION'}
 
