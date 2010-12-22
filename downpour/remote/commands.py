@@ -26,7 +26,8 @@ class DownloadAdd(amp.Command):
     errors = {Exception: 'EXCEPTION'}
 
 class TorrentAddFile(amp.Command):
-    arguments = [('data', amp.String())]
+    arguments = [('data', amp.String()),
+        ('type', amp.String())]
     response = [('result', amp.Integer())]
     errors = {Exception: 'EXCEPTION'}
 

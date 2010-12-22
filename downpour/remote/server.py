@@ -34,10 +34,11 @@ class ServerProtocol(amp.AMP):
 
     commands.DownloadAdd.responder(download_add)
 
-    def torrent_add_file(self, data):
+    def torrent_add_file(self, data, type):
         self.check_auth()
         d = models.Download()
         d.mime_type = u'application/x-bittorrent'
+        d.media_type = type
         d.metadata = data
         d.description = u'Imported torrent'
         return {'result': self.factory.application.get_manager(self.user).add_download(d)}
