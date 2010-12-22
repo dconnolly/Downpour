@@ -55,7 +55,7 @@ class DownpourTorrentHandler:
             f = open(self.file)
             torrentdata = f.read()
             f.close()
-            client.callRemote(commands.TorrentAddFile, data=torrentdata).addCallback(self.commandSuccess, client).addErrback(self.fatalError)
+            client.callRemote(commands.TorrentAddFile, data=torrentdata, type=self.options.type).addCallback(self.commandSuccess, client).addErrback(self.fatalError)
         else:
             raise Exception('Unable to read file %s' % self.file);
 

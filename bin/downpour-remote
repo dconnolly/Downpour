@@ -31,7 +31,7 @@ def loginComplete(result, p, args):
     cmds = {
         'status': (commands.Status,),
         'download-add': (commands.DownloadAdd, 'url'),
-        'torrent-add-file': (commands.TorrentAddFile, 'data'),
+        'torrent-add-file': (commands.TorrentAddFile, 'data', 'type'),
         'download-list': (commands.DownloadList,),
         'download-info': (commands.DownloadInfo, 'id'),
         'download-control': (commands.DownloadControl, 'id', 'action'),
