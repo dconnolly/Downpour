@@ -28,7 +28,7 @@
 			setProgress(document.getElementById('totalprogress'),
 				data.status.progress, ' complete');
 			setProgress(document.getElementById('diskspace'),
-				data.status.diskfreepct, ' (' + data.status.diskfree + ') free');
+				data.status.userdiskfreepct, ' (' + data.status.userdiskfree + ') free');
 
 			for (var i = 0; i < data.downloads.length; ++i) {
 				dl = data.downloads[i];
@@ -220,13 +220,13 @@
 			<td width="10">&nbsp;</td>
 			<td width="70" align="right">Storage&nbsp;&nbsp;</td>
 			<td width="235" id="diskspace">
-				{% set label = '(' + status.diskfree|filesizeformat + ') free' %}
-				{% if status.diskfreepct < 10 %}
-					{{ status.diskfreepct|progressbar('99%',style='red',label=label) }}
-				{% elif status.diskfreepct < 30 %}
-					{{ status.diskfreepct|progressbar('99%',style='yellow',label=label) }}
+				{% set label = '(' + status.userdiskfree|filesizeformat + ') free' %}
+				{% if status.userdiskfreepct < 10 %}
+					{{ status.userdiskfreepct|progressbar('99%',style='red',label=label) }}
+				{% elif status.userdiskfreepct < 30 %}
+					{{ status.userdiskfreepct|progressbar('99%',style='yellow',label=label) }}
 				{% else %}
-					{{ status.diskfreepct|progressbar('99%',label=label) }}
+					{{ status.userdiskfreepct|progressbar('99%',label=label) }}
 				{% endif %}
 			</td>
 		</tr>
