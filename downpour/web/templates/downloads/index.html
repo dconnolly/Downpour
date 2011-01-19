@@ -40,7 +40,10 @@
 					document.getElementById(prefix + 'status').innerHTML =
 						'<a class="status_' + dl.status.toLowerCase() +
 						'" href="/downloads/' + dl.id + '" title="' +
-						dl.status_message + '">';
+						dl.status_message + '">' + dl.status + '</a>' +
+						'<a class="status_' + dl.status.toLowerCase() +
+						'" href="/downloads/' + dl.id + '" title="' +
+						dl.status_message + '"> <img src="/media/images/info-small.png"/></a>';
 				} else {
 					document.getElementById(prefix + 'status').innerHTML = dl.status;
 				}
@@ -144,7 +147,7 @@
 		}
 
 		updater = null;
-		addEvent(window, 'load', function() { updater = setInterval(updateTable, 5000); });
+		addEvent(window, 'load', function() { updater = setInterval(updateTable, 2000); });
 
 	</script>
 {% endblock %}
