@@ -13,17 +13,41 @@ from twisted.protocols import amp
 from optparse import OptionParser
 import logging
 import os
+import time
 
 class DownpourTorrentHandler:
 
     config = {
-            'host': '192.168.1.4',
-            'port': 6226,
-            'username': 'mediacenter',
-            'password': 'media'
+            'host': 'localhost',
+            'port': '6226'
             }
+
     file = None
+    fileLabel = None
+    statusLabel = None
+    statusIcon = None
+    mediaList = None
+    queueButton = None
+    settingsButton = None
+    torrentData = None
+    cancelButton = None
     options = None
+    buttonBox = None
+
+    mediaTypes = {
+        'Music': 'audio/music',
+        'Podcasts': 'audio/podcast',
+        'Other Audio': 'audio/other',
+        'Movies': 'video/movie',
+        'TV Series': 'video/tv',
+        'Other Video': 'video/other',
+        'Photos': 'image/photos',
+        'Other Images': 'image/other'
+    }
+    # Ordered list because python won't iterate through dicts
+    # in the original key order
+    mediaNames = ('Music', 'Podcasts', 'Other Audio', 'Movies',
+        'TV Series', 'Other Video', 'Photos', 'Other Images')
 
     def add_torrent(self, widget, data=None):
 
@@ -31,11 +55,10 @@ class DownpourTorrentHandler:
         c = ClientCreator(reactor, amp.AMP)
         if self.config['host'].startswith('/'):
             c.connectUNIX(self.config['host']).addCallback(self.connectSuccess
-                ).addErrback(self.fatalError)
+                ).addErrback(self.fatalError, 'Could not connect to Downpour server at <b>%s</b>' % self.config['host'])
         else:
-            c.connectTCP(self.config['host'], self.config['port']
-                ).addCallback(self.connectSuccess).addErrback(self.fatalError)
-        reactor.run()
+            c.connectTCP(self.config['host'], int(self.config['port'])
+                ).addCallback(self.connectSuccess).addErrback(self.fatalError, 'Could not connect to Downpour server at <b>%s:%s</b>' % (self.config['host'], self.config['port']))
 
     # Connection handlers
     def connectSuccess(self, client):
@@ -43,36 +66,93 @@ class DownpourTorrentHandler:
                 username=self.config['username'],
                 password=self.config['password']
             ).addCallback(self.loginComplete, client
-            ).addErrback(self.fatalError);
+            ).addErrback(self.fatalError)
 
     def loginComplete(self, result, client):
 
         if not result['result']:
-            raise Exception('Login failed')
+            raise Exception('Authentication failed, check your settings')
 
+        mediaTypeName = self.get_active_text(self.mediaList)
+        mediaType = ''
+        if mediaTypeName != 'None':
+            mediaType = self.mediaTypes[mediaTypeName]
+        print mediaTypeName
         params = {}
         if os.access(self.file, os.R_OK):
             f = open(self.file)
             torrentdata = f.read()
             f.close()
-            client.callRemote(commands.TorrentAddFile, data=torrentdata, type=self.options.type).addCallback(self.commandSuccess, client).addErrback(self.fatalError)
+            client.callRemote(commands.TorrentAddFile, data=torrentdata, type=mediaType).addCallback(self.commandSuccess, client).addErrback(self.fatalError)
         else:
-            raise Exception('Unable to read file %s' % self.file);
+            raise Exception('Unable to find file %s' % self.file)
 
     def commandSuccess(self, result, p):
-        reactor.stop()
+        self.statusLabel.set_markup('<i>The download has been queued</i>')
+        self.statusIcon.set_from_stock(gtk.STOCK_INFO, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.statusLabel.show()
+        self.statusIcon.show()
+        self.statusBox.show()
 
-    def fatalError(self, failure):
-        print failure.getErrorMessage()
-        reactor.stop()
-        self.destroy(None)
+        # Disable buttons
+        self.mediaList.set_sensitive(False)
+        self.queueButton.set_sensitive(False)
+        self.settingsButton.set_sensitive(False)
+        self.cancelButton.set_label('Close Window')
+
+    def fatalError(self, failure, message=None):
+        if message is None:
+            message = failure.getErrorMessage()
+        self.statusLabel.set_markup('<i>%s</i>' % message)
+        self.statusIcon.set_from_stock(gtk.STOCK_DIALOG_ERROR, gtk.ICON_SIZE_SMALL_TOOLBAR)
+        self.statusLabel.show()
+        self.statusIcon.show()
+        self.statusBox.show()
+
+    def open_settings(self, widget, data=None):
+        DownpourSettingsDialog(self)
 
     def delete_event(self, widget, event, data=None):
         return False
 
     def destroy(self, widget, data=None):
-        gtk.main_quit()
+        reactor.stop()
 
+    def get_active_text(self, combobox):
+        model = combobox.get_model()
+        active = combobox.get_active()
+        if active < 0:
+            return None
+        return model[active][0]
+
+    def keypress(self, widget, event) :
+        if event.keyval == gtk.keysyms.Escape :
+            self.destroy(None)
+
+    def load_config(self):
+
+        configfile = os.path.expanduser('~/.config/downpour/downpour-remote.cfg')
+        if os.path.exists(configfile):
+            f = open(configfile)
+            lines = f.readlines()
+            f.close()
+
+            for line in lines:
+                (key, value) = line.split('=')
+                self.config[key.strip()] = value.strip()
+
+    def write_config(self, config):
+
+        configdir = os.path.expanduser('~/.config/downpour')
+        if not os.path.exists(configdir):
+            os.makedirs(configdir)
+
+        configfile = '%s/downpour-remote.cfg' % configdir
+        f = open(configfile, 'w')
+        for key in self.config:
+            f.write('%s=%s\n' % (key, self.config[key]))
+        f.close()
+        
     def __init__(self, file, options):
 
         self.file = file
@@ -83,17 +163,233 @@ class DownpourTorrentHandler:
         self.window.connect("destroy", self.destroy)
         self.window.set_border_width(10)
 
-        self.button = gtk.Button("Add to Downpour")
-        self.button.connect("clicked", self.add_torrent, None)
-        self.button.connect_object("clicked", gtk.Widget.destroy, self.window)
+        # Main layout box
+        vbox = gtk.VBox(False, 6)
 
-        self.window.add(self.button)
-        self.button.show()
+        table = gtk.Table(2, 3)
+        table.set_row_spacings(6)
+        table.set_col_spacings(12)
+
+        # Filename field
+        label = gtk.Label("Torrent:")
+        label.set_alignment(0, 0.5)
+        table.attach(label, 0, 1, 0, 1, gtk.FILL)
+        label.show()
+
+        self.fileLabel = gtk.Label("<i>%s</i>" % os.path.basename(file))
+        self.fileLabel.set_use_markup(True)
+        self.fileLabel.set_alignment(0, 0.5)
+        table.attach(self.fileLabel, 1, 3, 0, 1, gtk.FILL)
+        self.fileLabel.show()
+
+        # Media type field
+        label = gtk.Label("Media Type:")
+        label.set_alignment(0, 0.5)
+        table.attach(label, 0, 1, 1, 2, gtk.FILL)
+        label.show()
+
+        self.mediaList = gtk.combo_box_new_text()
+        self.mediaList.append_text("None")
+        for t in self.mediaNames:
+            self.mediaList.append_text(t)
+        self.mediaList.set_active(0)
+        table.attach(self.mediaList, 1, 2, 1, 2, gtk.SHRINK)
+        self.mediaList.show()
+
+        label = gtk.Label()
+        table.attach(label, 2, 3, 1, 2, gtk.EXPAND)
+        label.show()
+
+        vbox.pack_start(table, True)
+        table.show()
+
+        self.statusBox = gtk.EventBox()
+        self.statusBox.modify_bg(gtk.STATE_NORMAL, gtk.gdk.color_parse('#FFFF99'))
+        hbox = gtk.HBox(False, 6)
+        label = gtk.Label()
+        label.set_padding(6, 6)
+        hbox.pack_start(label, True, True, 6)
+        label.show()
+        self.statusIcon = gtk.Image()
+        hbox.pack_start(self.statusIcon, False, False)
+        self.statusLabel = gtk.Label()
+        hbox.pack_start(self.statusLabel, False, False)
+        label = gtk.Label()
+        label.set_padding(6, 6)
+        hbox.pack_end(label, True, True, 6)
+        label.show()
+
+        self.statusBox.add(hbox)
+        hbox.show()
+        vbox.pack_start(self.statusBox)
+
+        self.buttonBox = gtk.HBox(True, 6)
+
+        self.queueButton = gtk.Button("Queue in Downpour")
+        self.queueButton.connect("clicked", self.add_torrent, None)
+
+        self.buttonBox.pack_start(self.queueButton)
+        self.queueButton.show()
+
+        self.settingsButton = gtk.Button("Settings...")
+        self.settingsButton.connect("clicked", self.open_settings, None)
+
+        self.buttonBox.pack_start(self.settingsButton)
+        self.settingsButton.show()
+
+        self.cancelButton = gtk.Button("Cancel Download")
+        self.cancelButton.connect_object("clicked", gtk.Widget.destroy, self.window)
+
+        self.buttonBox.pack_end(self.cancelButton)
+        self.cancelButton.show()
+
+        vbox.pack_end(self.buttonBox, True)
+        self.buttonBox.show()
+
+        self.window.add(vbox)
+        vbox.show()
+
+        self.window.set_title("Downpour Download Manager")
+        self.window.set_position(gtk.WIN_POS_CENTER_ALWAYS)
+        self.window.connect("key-press-event", self.keypress)
         self.window.show()
+
+        self.queueButton.grab_focus()
+
+        self.load_config()
+
+        if os.access(file, os.R_OK):
+            f = open(file)
+            self.torrentData = f.read()
+            f.close()
+        else:
+            self.fatalError(None, 'Unable to find file %s' % self.file)
+            self.mediaList.set_sensitive(False)
+            self.queueButton.set_sensitive(False)
 
     def main(self):
 
-        gtk.main()
+        reactor.run()
+
+class DownpourSettingsDialog:
+
+    parent = None
+    window = None
+
+    host = None
+    port = None
+    username = None
+    password = None
+
+    saveButton = None
+    cancelButton = None
+
+    def __init__(self, parent):
+
+        self.parent = parent
+
+        # Open a settings window here
+        swin = gtk.Window(gtk.WINDOW_TOPLEVEL)
+        swin.set_title("Downpour Remote Settings")
+        swin.set_position(gtk.WIN_POS_CENTER_ALWAYS)
+        swin.connect("key-press-event", self.keypress)
+        swin.set_border_width(10)
+
+        # Main layout box
+        vbox = gtk.VBox(False, 6)
+
+        table = gtk.Table(4, 2)
+        table.set_row_spacings(6)
+        table.set_col_spacings(12)
+
+        # Host field
+        label = gtk.Label("Host:")
+        label.set_alignment(0, 0.5)
+        table.attach(label, 0, 1, 0, 1, gtk.FILL)
+        label.show()
+
+        self.host = gtk.Entry()
+        self.host.set_text(parent.config['host']);
+        table.attach(self.host, 1, 2, 0, 1, gtk.FILL)
+        self.host.show()
+
+        # Port field
+        label = gtk.Label("Port:")
+        label.set_alignment(0, 0.5)
+        table.attach(label, 0, 1, 1, 2, gtk.FILL)
+        label.show()
+
+        self.port = gtk.Entry()
+        self.port.set_text(parent.config['port']);
+        table.attach(self.port, 1, 2, 1, 2, gtk.FILL)
+        self.port.show()
+
+        # Username field
+        label = gtk.Label("Username:")
+        label.set_alignment(0, 0.5)
+        table.attach(label, 0, 1, 2, 3, gtk.FILL)
+        label.show()
+
+        self.username = gtk.Entry()
+        self.username.set_text(parent.config['username']);
+        table.attach(self.username, 1, 2, 2, 3, gtk.FILL)
+        self.username.show()
+
+        # Password field
+        label = gtk.Label("Password:")
+        label.set_alignment(0, 0.5)
+        table.attach(label, 0, 1, 3, 4, gtk.FILL)
+        label.show()
+
+        self.password = gtk.Entry()
+        self.password.set_visibility(False)
+        self.password.set_text(parent.config['password']);
+        table.attach(self.password, 1, 2, 3, 4, gtk.FILL)
+        self.password.show()
+
+        vbox.pack_start(table, True)
+        table.show()
+
+        hbox = gtk.HBox(True, 6)
+
+        self.saveButton = gtk.Button("Save")
+        self.saveButton.connect("clicked", self.save_settings, None)
+
+        hbox.pack_end(self.saveButton)
+        self.saveButton.show()
+
+        self.cancelButton = gtk.Button("Close")
+        self.cancelButton.connect_object("clicked", gtk.Widget.destroy, swin)
+
+        hbox.pack_end(self.cancelButton)
+        self.cancelButton.show()
+
+        vbox.pack_end(hbox, True, False)
+        hbox.show()
+
+        swin.add(vbox)
+        vbox.show()
+
+        self.window = swin
+        swin.show()
+
+        self.saveButton.grab_focus()
+
+    def save_settings(self, widget, data=None):
+        settings = {
+            'host': self.host.get_text(),
+            'port': self.port.get_text(),
+            'username': self.username.get_text(),
+            'password': self.password.get_text()
+            }
+        self.parent.write_config(settings)
+        self.window.destroy()
+
+    def keypress(self, widget, event) :
+        if event.keyval == gtk.keysyms.Escape:
+            self.window.destroy()
+        if event.keyval == gtk.keysyms.Return:
+            self.save_settings(None)
 
 if __name__ == "__main__":
 
