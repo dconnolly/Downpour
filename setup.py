@@ -20,6 +20,9 @@ setup(name="Downpour",
     include_package_data=True,
     # Not zip-safe until /media/ handler is rewritten
     zip_safe=False,
-    scripts=['bin/downpourd', 'bin/downpour-remote'],
+    scripts=['bin/downpourd', 'bin/downpour-remote', 'bin/downpour-torrent-handler'],
+    data_files=[
+        ('/usr/share/applications', ['bin/downpour-torrent-handler.desktop']),
+        ('/usr/share/icons/hicolor/scalable/apps', ['graphics/downpour.svg'])],
     install_requires=['Twisted-Core>=8.2.0', 'Twisted-Web>=8.2.0', 'jinja2>=2.5.0', 'storm>=0.14', 'FeedParser>=4.1', 'python-dateutil>=1.4.1']
 )
