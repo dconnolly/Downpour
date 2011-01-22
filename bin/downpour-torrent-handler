@@ -143,6 +143,8 @@ class DownpourTorrentHandler:
 
     def write_config(self, config):
 
+        self.config = config
+
         configdir = os.path.expanduser('~/.config/downpour')
         if not os.path.exists(configdir):
             os.makedirs(configdir)
@@ -383,7 +385,7 @@ class DownpourSettingsDialog:
         self.window = swin
         swin.show()
 
-        self.saveButton.grab_focus()
+        self.host.grab_focus()
 
     def save_settings(self, widget, data=None):
         settings = {
