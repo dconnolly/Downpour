@@ -101,6 +101,7 @@ class DownpourTorrentHandler:
         self.cancelButton.set_label('Close Window')
 
     def fatalError(self, failure, message=None):
+        failure.printTraceback()
         if message is None:
             message = failure.getErrorMessage()
         self.statusLabel.set_markup('<i>%s</i>' % message)
