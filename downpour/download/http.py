@@ -93,7 +93,7 @@ class DownloadStatus(object):
         self.download.downloadrate = self.download_rate
         self.download.downloaded = self.bytes_downloaded
         if self.download.size:
-            self.timeleft = (self.download.size - self.bytes_downloaded) / self.download_rate
+            self.download.timeleft = float(self.download.size - self.bytes_downloaded) / self.download_rate
 
     def onEnd(self, downloader):
         self.download.progress = 100
@@ -114,6 +114,8 @@ class HTTPManagedDownloader(HTTPDownloader):
                                 agent='Downpour v%s' % VERSION,
                                 *args, **kwargs)
 
+        self.origPartial = self.requestedPartial
+
     def setRateLimit(self, rate=None):
         self.bucketFilter.rate = rate
 
@@ -130,6 +132,11 @@ class HTTPManagedDownloader(HTTPDownloader):
 
     def gotHeaders(self, headers):
         HTTPDownloader.gotHeaders(self, headers)
+        # This method is being called twice sometimes,
+        # first time without a content-range
+        contentRange = headers.get('content-range', None)
+        if contentRange and self.requestedPartial == 0:
+            self.requestedPartial = self.origPartial
         if self.statusHandler:
             self.statusHandler.onHeaders(self, headers)
 
