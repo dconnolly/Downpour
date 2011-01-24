@@ -23,6 +23,12 @@ setup(name="Downpour",
     scripts=['bin/downpourd', 'bin/downpour-remote', 'bin/downpour-torrent-handler'],
     data_files=[
         ('/usr/share/applications', ['bin/downpour-torrent-handler.desktop']),
-        ('/usr/share/icons/hicolor/scalable/apps', ['graphics/downpour.svg'])],
-    install_requires=['Twisted-Core>=8.2.0', 'Twisted-Web>=8.2.0', 'jinja2>=2.5.0', 'storm>=0.14', 'FeedParser>=4.1', 'python-dateutil>=1.4.1']
+        ('/usr/share/icons/hicolor/16x16/apps', ['graphics/icons/16x16/apps/downpour.png']),
+        ('/usr/share/icons/hicolor/22x22/apps', ['graphics/icons/22x22/apps/downpour.png']),
+        ('/usr/share/icons/hicolor/24x24/apps', ['graphics/icons/24x24/apps/downpour.png']),
+        ('/usr/share/icons/hicolor/32x32/apps', ['graphics/icons/32x32/apps/downpour.png']),
+        ('/usr/share/icons/hicolor/48x48/apps', ['graphics/icons/48x48/apps/downpour.png']),
+        ('/usr/share/icons/hicolor/scalable/apps', ['graphics/icons/scalable/apps/downpour.svg'])
+        ],
+    install_requires=['Twisted-Core>=9.0', 'Twisted-Web>=9.0', 'jinja2>=2.5.0', 'storm>=0.14', 'FeedParser>=4.1', 'python-dateutil>=1.4.1']
 )

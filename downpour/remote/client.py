@@ -4,9 +4,9 @@ from twisted.web.client import Agent
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer
 from zope.interface import implements
-import json, base64
+import json, base64, os
 
-class Remote:
+class DownpourRemote:
 
     def __init__(self, host='http://localhost:6280', username=None, password=None):
 
@@ -32,6 +32,9 @@ class Remote:
             })
 
     def add_torrent(self, file, media_type=None):
+
+        if not os.path.exists(file):
+            raise Exception('Unable to find file %s' % self.file)
 
         f = open(file)
         metadata = f.read()

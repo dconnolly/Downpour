@@ -171,6 +171,7 @@ class Download(JSONRemoteResource):
         self.putChild('stop', StopDownload(id))
         self.putChild('restart', RestartDownload(id))
         self.putChild('remove', RemoveDownload(id))
+        self.putChild('update', UpdateDownload(id))
 
     def call(self, manager, params=None):
         return self.get_download_dict(manager, manager.get_download(self.id), True)
