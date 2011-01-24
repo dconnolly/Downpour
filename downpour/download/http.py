@@ -25,8 +25,9 @@ class HTTPDownloadClient(DownloadClient):
 
     def stop(self):
         self.download.status = Status.STOPPED
-        if self.factory:
-            self.factory.stopFactory()
+        self.download.downloadrate = 0
+        if self.factory.connector:
+            self.factory.connector.disconnect()
             return True
         return False
 
@@ -62,11 +63,11 @@ class DownloadStatus(object):
         if downloader.requestedPartial:
             contentRange = headers.get('content-range', None)
             start, end, contentLength = http.parseContentRange(contentRange[0])
-            bytes_start = start - 1
-            self.bytes_downloaded = bytes_start
+            self.bytes_start = start - 1
+            self.bytes_downloaded = self.bytes_start
         else:
-            contentLength = headers.get('content-length', [0])
-        self.download.size = float(contentLength[0])
+            contentLength = headers.get('content-length', [0])[0]
+        self.download.size = float(contentLength)
         contentType = headers.get('content-type', None)
         if contentType:
             self.download.mime_type = unicode(contentType[0])
@@ -86,7 +87,8 @@ class DownloadStatus(object):
     def onPart(self, downloader, data):
         self.bytes_downloaded = self.bytes_downloaded + len(data)
         if self.download.size:
-            self.download.progress = (self.bytes_downloaded / self.download.size) * 100
+            self.download.progress = (float(self.bytes_downloaded)
+                / float(self.download.size)) * 100
         self.download_rate = (self.bytes_downloaded - self.bytes_start) / (time.time() - self.start_time)
         self.download.downloadrate = self.download_rate
         self.download.downloaded = self.bytes_downloaded
@@ -147,6 +149,7 @@ class HTTPManagedDownloader(HTTPDownloader):
         HTTPDownloader.pageEnd(self)
 
     def startedConnecting(self, connector):
+        self.connector = connector
         if (self.statusHandler):
             self.statusHandler.onConnect(self)
         HTTPDownloader.startedConnecting(self, connector)
