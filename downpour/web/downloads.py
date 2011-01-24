@@ -345,7 +345,7 @@ class Update(common.AuthenticatedResource):
             if hasattr(self.download, k) and k in converters:
                 setattr(self.download, k, converters[k](request.args[k][0]))
         # Reprocess library import if it is already finished
-        if self.download.status == download.Status.COMPLETED:
+        if self.download.imported:
             manager.process_download(self.download,
                 manager.get_download_client(self.download.id))
         manager.store.commit()

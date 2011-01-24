@@ -488,6 +488,10 @@ class UserManager(Manager):
                 ).order_by(models.Download.added))
         return self.downloads
 
+    def add_feed(self, f):
+        f.user = self.user
+        return Manager.add_feed(self, f)
+
     def get_feeds(self):
         if self.user.admin:
             return list(self.store.find(models.Feed

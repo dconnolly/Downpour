@@ -1,5 +1,5 @@
 from downpour.web import common, account, downloads, feeds, search, settings
-from downpour.web import status, browse, libraries, users, work
+from downpour.web import status, browse, libraries, users, work, remote
 from twisted.web import static, server
 
 class SiteRoot(common.Resource):
@@ -15,6 +15,7 @@ class SiteRoot(common.Resource):
         self.putChild('feeds', feeds.Root())
         self.putChild('libraries', libraries.Root())
         self.putChild('media', static.File(mediadir))
+        self.putChild('remote', remote.Root())
         self.putChild('search', search.Root())
         self.putChild('settings', settings.Root())
         self.putChild('status', status.Root())
