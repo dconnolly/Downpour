@@ -33,8 +33,12 @@
 			for (var i = 0; i < data.downloads.length; ++i) {
 				dl = data.downloads[i];
 				prefix = 'download' + dl.id + '_';
+				var descTrunc = dl.description;
+				if (descTrunc.length > 60)
+					descTrunc = descTrunc.substring(0, 60) + '...';
 				document.getElementById(prefix + 'description').innerHTML =
-					'<a href="/downloads/' + dl.id + '/">' + dl.description + '</a>';
+					'<a title="' + dl.description + '" href="/downloads/'
+					+ dl.id + '/">' + descTrunc + '</a>';
 				document.getElementById(prefix + 'size').innerHTML = dl.size;
 				if (dl.status_message) {
 					document.getElementById(prefix + 'status').innerHTML =
@@ -361,7 +365,7 @@
 								&nbsp;
 							{% endif %}
 						</td>
-						<td class="description" id="download{{ dl.id }}_description"><a href="/downloads/{{ dl.id }}">{{ dl.description }}</a></td>
+						<td class="description" id="download{{ dl.id }}_description"><a title="{{ dl.description }}" href="/downloads/{{ dl.id }}">{{ dl.description|truncate(60,true) }}</a></td>
 						<td id="download{{ dl.id }}_size" align="right" class="nowrap">
 							{% if dl.size %}
 								{{ dl.size|filesizeformat|replace('Bytes','b') }}
