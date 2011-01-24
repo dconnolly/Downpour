@@ -297,7 +297,7 @@ class DownpourSettingsDialog:
         table.set_col_spacings(12)
 
         # Host field
-        label = gtk.Label("Host:")
+        label = gtk.Label("Downpour URL:")
         label.set_alignment(0, 0.5)
         table.attach(label, 0, 1, 0, 1, gtk.FILL)
         label.show()
@@ -336,17 +336,21 @@ class DownpourSettingsDialog:
 
         hbox = gtk.HBox(True, 6)
 
-        self.saveButton = gtk.Button("Save")
-        self.saveButton.connect("clicked", self.save_settings, None)
-
-        hbox.pack_start(self.saveButton)
-        self.saveButton.show()
-
         self.cancelButton = gtk.Button("Close")
         self.cancelButton.connect_object("clicked", gtk.Widget.destroy, swin)
 
-        hbox.pack_end(self.cancelButton)
+        hbox.pack_end(self.cancelButton, False)
         self.cancelButton.show()
+
+        self.saveButton = gtk.Button("Save")
+        self.saveButton.connect("clicked", self.save_settings, None)
+
+        hbox.pack_end(self.saveButton, False)
+        self.saveButton.show()
+
+        label = gtk.Label()
+        hbox.pack_start(label)
+        label.show()
 
         vbox.pack_end(hbox, True, False)
         hbox.show()

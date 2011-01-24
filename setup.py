@@ -20,7 +20,7 @@ setup(name="Downpour",
     include_package_data=True,
     # Not zip-safe until /media/ handler is rewritten
     zip_safe=False,
-    scripts=['bin/downpourd', 'bin/downpour-remote', 'bin/downpour-torrent-handler'],
+    scripts=['bin/downpourd', 'bin/downpour-torrent-handler'],
     data_files=[
         ('/usr/share/applications', ['bin/downpour-torrent-handler.desktop']),
         ('/usr/share/icons/hicolor/16x16/apps', ['graphics/icons/16x16/apps/downpour.png']),
