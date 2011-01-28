@@ -176,9 +176,11 @@ def feed_parsed(parsed, feeds, manager, feed):
         update_feeds(feeds, manager.application)
 
 # Remove old feed downloads after a successful download
-def clean_download_feed(d, manager):
+def clean_download_feed(d, app):
 
     if d.feed and d.feed.queue_size != 0:
+
+        manager = app.get_manager(d.user)
 
         feed = d.feed
 

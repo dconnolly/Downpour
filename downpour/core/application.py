@@ -125,7 +125,7 @@ class Application:
 
         # Start RSS feed checker
         self.feed_checker = task.LoopingCall(checker.check_feeds, self.manager).start(60, True)
-        self.add_event_listener('download_imported', checker.clean_download_feed, self.manager)
+        self.add_event_listener('download_imported', checker.clean_download_feed, self)
 
         # Start plugins
         for plugin in self.plugins:

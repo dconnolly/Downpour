@@ -415,12 +415,13 @@ def remove_file(file, trim_empty_dirs=False):
     try:
         os.remove(file)
         if trim_empty_dirs:
-            srcdir = os.path.dirname(src)
+            srcdir = os.path.dirname(file)
             while os.path.exists(srcdir) and not len(os.listdir(srcdir)):
                 os.rmdir(srcdir)
                 srcdir = os.path.dirname(srcdir)
         return True
     except Exception as e:
+        logging.debug(e)
         return False
 
 def copy_file(src, dest):
