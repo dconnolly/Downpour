@@ -37,6 +37,7 @@ class Root(common.AuthenticatedResource):
                     }
                 return self.render_template('browse/confirmdelete.html', request, context)
             else:
+                manager.application.on_event('library_file_removed', path)
                 os.remove(path)
 
             request.redirect('browse%s' % redirect)
@@ -61,6 +62,7 @@ class Root(common.AuthenticatedResource):
             if os.path.isdir(path):
                 shutil.rmtree(path)
             else:
+                manager.application.on_event('library_file_removed', path)
                 os.remove(path)
 
             request.redirect('browse%s' % redirect)

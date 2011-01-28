@@ -89,6 +89,7 @@ def feed_parsed(parsed, feeds, manager, feed):
             item.guid = e.id
             item.removed = False
             manager.store.add(item)
+            manager.application.on_event('feed_item_added', item)
 
         if do_update or item.updated != updated:
             # Updated with new download link, re-add
@@ -157,19 +158,29 @@ def feed_parsed(parsed, feeds, manager, feed):
             item.download = d
             manager.add_download(d)
 
-
         item_count += 1
         if feed.queue_size > 0 and item_count >= feed.queue_size:
             break;
 
     if has_new:
+        manager.application.on_event('feed_updated', feed)
         if 'modified' in parsed:
             feed.last_update = mktime(parsed.modified)
         else:
             feed.last_update = time()
 
-    # Remove old downloads
-    if feed.queue_size != 0:
+    manager.store.commit()
+
+    # Process the next feed
+    if len(feeds):
+        update_feeds(feeds, manager.application)
+
+# Remove old feed downloads after a successful download
+def clean_download_feed(d, manager):
+
+    if d.feed and d.feed.queue_size != 0:
+
+        feed = d.feed
 
         items = manager.store.find(models.FeedItem,
             models.FeedItem.feed_id == feed.id,
@@ -222,6 +233,7 @@ def feed_parsed(parsed, feeds, manager, feed):
                     i.removed = True
 
         for i in remove:
+            manager.application.on_event('feed_item_removed', i)
             logging.debug('Removing old feed item %d (%s)' % (i.id, i.title))
             for f in i.download.files:
                 realdir = '/'.join(
@@ -229,13 +241,10 @@ def feed_parsed(parsed, feeds, manager, feed):
                 realpath = '/'.join((realdir, f.filename))
                 if organizer.remove_file(realpath, True):
                     i.download.files.remove(f)
+                    manager.application.on_event('library_file_removed', realpath, i.download)
             i.removed = True
 
     manager.store.commit()
-
-    # Process the next feed
-    if len(feeds):
-        update_feeds(feeds, manager.application)
 
 def seen(m, items):
     for i in items:

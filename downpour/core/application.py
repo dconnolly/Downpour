@@ -26,6 +26,29 @@ class Application:
         self.manager = None
         self.plugins = []
 
+        # Not a comprehensive list, just adding as I need them
+        self.listeners = {
+            'downpour_started': [],
+            'downpour_shutdown': [],
+            'downpour_paused': [],
+            'downpour_resumed': [],
+            'download_added': [],
+            'download_started': [],
+            'download_stopped': [],
+            'download_failed': [],
+            'download_complete': [],
+            'download_imported': [],
+            'download_import_failed': [],
+            'download_removed': [],
+            'feed_added': [],
+            'feed_updated': [],
+            'feed_removed': [],
+            'feed_item_added': [],
+            'feed_item_removed': [],
+            'library_file_added': [],
+            'library_file_removed': []
+        }
+
         # Load configuration from file
         config = Application.options['config']
         if options and options.has_key('config'):
@@ -102,10 +125,13 @@ class Application:
 
         # Start RSS feed checker
         self.feed_checker = task.LoopingCall(checker.check_feeds, self.manager).start(60, True)
+        self.add_event_listener('download_imported', checker.clean_download_feed, self.manager)
 
         # Start plugins
         for plugin in self.plugins:
             plugin.start()
+
+        self.on_event('downpour_started')
 
         # Shutdown handler
         atexit.register(self.stop)
@@ -125,6 +151,8 @@ class Application:
         # Wait for all pause tasks to stop
         dfl = self.manager.pause()
         self.wait_for_deferred(dfl)
+
+        self.on_event('downpour_shutdown')
 
         # Stop plugins
         for plugin in self.plugins:
@@ -220,6 +248,24 @@ class Application:
 
     def is_paused(self):
         return self.get_state(u'paused', u'0') == u'1'
+
+    def add_event_listener(self, event, listener, *args):
+        if event in self.listeners:
+            self.listeners[event].append([listener, args])
+
+    def on_event(self, event, *args):
+        logging.debug('event: %s' % event)
+        if event in self.listeners:
+            for l in self.listeners[event]:
+                try:
+                    cargs = []
+                    cargs.extend(args)
+                    cargs.extend(l[1])
+                    l[0](*cargs)
+                except Exception as e:
+                    logging.debug('Caught error in event listener: %s' % e)
+        else:
+            raise ValueError('Unknown event "%s"' % event)
 
     def run(self):
         # Initialize plugins

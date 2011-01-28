@@ -114,6 +114,7 @@ class Manager:
         self.get_downloads().append(d)
         self.store.commit()
         logging.debug(u'Added new download ' + d.description)
+        self.application.on_event('download_added', d)
 
         self.application.auto_queue()
 
@@ -161,6 +162,7 @@ class Manager:
         except Exception as e:
             d.status = Status.FAILED
             d.status_message = unicode(e)
+            self.application.on_event('download_failed', d, e)
             logging.debug(u'Download failed: %s' % d.status_message)
 
     def remove_download(self, id, remove_files=True):
@@ -189,6 +191,7 @@ class Manager:
         except Exception as e:
             logging.debug(e)
 
+        self.application.on_event('download_removed', d)
         logging.debug(u'Removed download %s (%s)' % (d.id, d.description))
 
     def remove_download_failed(self, failure, dc, d):
@@ -244,6 +247,7 @@ class Manager:
         d.completed = time()
         d.status_message = None
         self.store.commit()
+        self.application.on_event('download_complete', d)
         logging.debug(u'Finished downloading %s (%s)' % (d.id, d.description))
         # NOTE: if upload_ratio is > 0, this will not get run until
         # seeding is finished!
@@ -260,11 +264,13 @@ class Manager:
         d.status_message = None
         if d.feed and d.feed.auto_clean:
             self.remove_download(d.id)
+        self.application.on_event('download_imported', d)
         logging.debug(u'Imported %s (%s)' % (d.id, d.description))
         self.store.commit()
 
     def process_download_failed(self, failure, d):
         d.status_message = unicode(failure.getErrorMessage())
+        self.application.on_event('download_import_failed', d, failure.value)
         logging.debug(u'Imported failed for %s (%s)' % (d.id, d.description))
         logging.debug(str(failure))
         self.store.commit()
@@ -274,7 +280,7 @@ class Manager:
         d.active = False
         d.status_message = unicode(failure.getErrorMessage())
         self.store.commit()
-        logging.debug(str(failure))
+        self.application.on_event('download_failed', d, failure.value)
         logging.debug(u'Download %s failed: %s' % (d.id, failure.getErrorMessage()))
 
     def start_download(self, id, force=False):
@@ -285,6 +291,7 @@ class Manager:
             d.status_message = None
             dfr = None
             if not self.paused and dc and (dc.is_startable() or force):
+                self.application.on_event('download_started', d)
                 logging.debug(u'Starting download %s (%s)' % (d.id, d.description))
                 dfr = defer.maybeDeferred(dc.start)
                 dfr.addErrback(self.download_failed, dc, d)
@@ -298,6 +305,7 @@ class Manager:
             d.status = Status.FAILED
             d.status_message = unicode(e)
             d.active = False
+            self.application.on_event('download_failed', d, e)
             logging.debug(u'Download failed: %s' % d.status_message)
 
     def commit_store(self, result):
@@ -319,17 +327,23 @@ class Manager:
         return dfr
 
     def pause(self):
+        dfl = None
         if not self.paused:
             logging.debug(u'Pausing all downloads')
             self.paused = True
             dl = [self.pause_download(d.id) for d in self.get_downloads() if d.active]
             self.store.commit()
-            return defer.DeferredList(dl, consumeErrors=True)
-        return defer.DeferredList([defer.succeed(False)])
+            dfl = defer.DeferredList(dl, consumeErrors=True)
+        else:
+            dfl = defer.DeferredList([defer.succeed(False)])
+        dfl.addCallback(lambda x: self.application.on_event('downpour_paused'))
+        return dfl
 
     def update_status(self, result, d, status, message=None):
-        if status == Status.STOPPED and d.progress == 100:
-            status = Status.COMPLETED
+        if status == Status.STOPPED:
+            self.application.on_event('download_stopped', d)
+            if d.progress == 100:
+                status = Status.COMPLETED
         d.status = status
         d.status_message = message
         self.store.commit()
@@ -341,12 +355,14 @@ class Manager:
             dl = [self.resume_download(d.id) \
                 for d in self.get_downloads() if d.active]
             self.auto_queue()
+            self.application.on_event('downpour_resume')
             return defer.DeferredList(dl, consumeErrors=True)
         return defer.DeferredList([defer.succeed(False)])
 
     def add_feed(self, f):
         self.store.add(f)
         self.store.commit()
+        self.application.on_event('feed_added', f)
         logging.debug(u'Added new feed ' + f.url)
         return f.id
 
@@ -375,6 +391,7 @@ class Manager:
         # Delete from database
         self.store.remove(f)
         self.store.commit()
+        self.application.on_event('feed_removed', f)
         logging.debug(u'Removed feed %s (%s)' % (f.id, f.name))
         return True
 

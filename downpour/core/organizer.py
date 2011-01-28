@@ -258,12 +258,15 @@ def import_files(download, manager, library, firstRun=True):
 
         # Move file on disk
         dfr = None
+        targetfile = '%s/%s' % (targetdir, dest)
         if not firstRun:
             dfr = threads.deferToThread(move_file, \
-                fullpath, '%s/%s' % (targetdir, dest), trim_empty_dirs=True)
+                fullpath, targetfile, trim_empty_dirs=True)
+            dfr.addCallback(lambda r: manager.application.on_event('library_file_removed', fullpath, download))
+            dfr.addCallback(lambda r: manager.application.on_event('library_file_added', targetfile, download))
         else:
-            dfr = threads.deferToThread(copy_file, \
-                fullpath, '%s/%s' % (targetdir, dest))
+            dfr = threads.deferToThread(copy_file, fullpath, targetfile)
+            dfr.addCallback(lambda r: manager.application.on_event('library_file_added', targetfile, download))
         dfr.addCallback(file_op_complete, download, file, firstRun, \
             library.directory, unicode(dest), download.media_type)
         dl.append(dfr)
