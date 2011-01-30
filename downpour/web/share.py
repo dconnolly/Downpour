@@ -59,7 +59,7 @@ class DirectoryIndex(static.DirectoryLister, SharedResource):
         dirs, files = self.getFilesAndDirectories(directory)
         dirs.extend(files)
 
-        request.write(json.dumps(dirs));
+        request.write(json.dumps(dirs, indent=4));
         request.finish()
         return server.NOT_DONE_YET
 
@@ -71,9 +71,12 @@ class DirectoryIndex(static.DirectoryLister, SharedResource):
             escapedPath = cgi.escape(path)
             if os.path.isdir(os.path.join(self.path, path)):
                 url = url + '/'
-                dirs.append({'text': escapedPath + "/", 'href': url,
-                             'size': '', 'type': 'directory',
-                             'encoding': ''})
+                dirs.append({
+                    'text': escapedPath + "/",
+                    'href': url,
+                    'type': 'directory',
+                    'size': '',
+                    'encoding': ''})
             else:
                 mimetype, encoding = static.getTypeAndEncoding(path, self.contentTypes,
                                                         self.contentEncodings,
@@ -83,8 +86,9 @@ class DirectoryIndex(static.DirectoryLister, SharedResource):
                 except OSError:
                     continue
                 files.append({
-                    'text': escapedPath, "href": url,
+                    'text': escapedPath,
+                    "href": url,
                     'type': mimetype,
-                    'encoding': (encoding and '[%s]' % encoding or ''),
-                    'size': size})
+                    'size': size,
+                    'encoding': (encoding and '%s' % encoding or '')})
         return dirs, files
