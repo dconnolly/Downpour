@@ -89,7 +89,7 @@ def feed_parsed(parsed, feeds, manager, feed):
             item.guid = e.id
             item.removed = False
             manager.store.add(item)
-            manager.application.on_event('feed_item_added', item)
+            manager.application.fire_event('feed_item_added', item)
 
         if do_update or item.updated != updated:
             # Updated with new download link, re-add
@@ -163,7 +163,7 @@ def feed_parsed(parsed, feeds, manager, feed):
             break;
 
     if has_new:
-        manager.application.on_event('feed_updated', feed)
+        manager.application.fire_event('feed_updated', feed)
         if 'modified' in parsed:
             feed.last_update = mktime(parsed.modified)
         else:
@@ -235,7 +235,7 @@ def clean_download_feed(d, app):
                     i.removed = True
 
         for i in remove:
-            manager.application.on_event('feed_item_removed', i)
+            manager.application.fire_event('feed_item_removed', i)
             logging.debug('Removing old feed item %d (%s)' % (i.id, i.title))
             for f in i.download.files:
                 realdir = '/'.join(
@@ -243,10 +243,10 @@ def clean_download_feed(d, app):
                 realpath = '/'.join((realdir, f.filename))
                 if organizer.remove_file(realpath, True):
                     i.download.files.remove(f)
-                    manager.application.on_event('library_file_removed', realpath, i.download)
+                    manager.application.fire_event('library_file_removed', realpath, i.download)
             i.removed = True
 
-    manager.store.commit()
+        manager.store.commit()
 
 def seen(m, items):
     for i in items:

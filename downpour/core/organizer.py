@@ -204,6 +204,8 @@ def process_download(manager, download, client):
             download.files.add(f)
         dfr = import_files(download, manager, library, firstRun=True)
 
+    manager.store.commit()
+
     return dfr
 
 # Copy media into library
@@ -262,11 +264,11 @@ def import_files(download, manager, library, firstRun=True):
         if not firstRun:
             dfr = threads.deferToThread(move_file, \
                 fullpath, targetfile, trim_empty_dirs=True)
-            dfr.addCallback(lambda r: manager.application.on_event('library_file_removed', fullpath, download))
-            dfr.addCallback(lambda r: manager.application.on_event('library_file_added', targetfile, download))
+            dfr.addCallback(manager.application.event_callback, 'library_file_removed', fullpath, download)
+            dfr.addCallback(manager.application.event_callback, 'library_file_added', targetfile, download)
         else:
             dfr = threads.deferToThread(copy_file, fullpath, targetfile)
-            dfr.addCallback(lambda r: manager.application.on_event('library_file_added', targetfile, download))
+            dfr.addCallback(manager.application.event_callback, 'library_file_added', targetfile, download)
         dfr.addCallback(file_op_complete, download, file, firstRun, \
             library.directory, unicode(dest), download.media_type)
         dl.append(dfr)
@@ -421,7 +423,6 @@ def remove_file(file, trim_empty_dirs=False):
                 srcdir = os.path.dirname(srcdir)
         return True
     except Exception as e:
-        logging.debug(e)
         return False
 
 def copy_file(src, dest):
@@ -445,7 +446,6 @@ def move_files(filemap, trim_empty_dirs=False):
         while os.path.exists(srcdir) and not len(os.listdir(srcdir)):
             os.rmdir(srcdir)
             srcdir = os.path.dirname(srcdir)
-
 
 def copy_files(filemap):
     for src in filemap:

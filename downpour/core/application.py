@@ -131,7 +131,7 @@ class Application:
         for plugin in self.plugins:
             plugin.start()
 
-        self.on_event('downpour_started')
+        self.fire_event('downpour_started')
 
         # Shutdown handler
         atexit.register(self.stop)
@@ -152,7 +152,7 @@ class Application:
         dfl = self.manager.pause()
         self.wait_for_deferred(dfl)
 
-        self.on_event('downpour_shutdown')
+        self.fire_event('downpour_shutdown')
 
         # Stop plugins
         for plugin in self.plugins:
@@ -253,7 +253,7 @@ class Application:
         if event in self.listeners:
             self.listeners[event].append([listener, args])
 
-    def on_event(self, event, *args):
+    def fire_event(self, event, *args):
         logging.debug('event: %s' % event)
         if event in self.listeners:
             for l in self.listeners[event]:
@@ -266,6 +266,10 @@ class Application:
                     logging.debug('Caught error in event listener: %s' % e)
         else:
             raise ValueError('Unknown event "%s"' % event)
+
+    def event_callback(self, result, event, *args):
+        self.fire_event(event, *args)
+        return result
 
     def run(self):
         # Initialize plugins
