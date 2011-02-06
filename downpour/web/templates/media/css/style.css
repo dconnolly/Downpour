@@ -158,7 +158,7 @@ table.list tbody td {
 	border-bottom: 1px solid #CCC;
 }
 .recently_completed {
-	clear: both;
+	clear: right;
 	padding-top: 25px;
 	font-size: 9pt;
 }
