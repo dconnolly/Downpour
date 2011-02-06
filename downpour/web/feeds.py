@@ -20,7 +20,7 @@ class Root(common.AuthenticatedResource):
     def render_GET(self, request):
         manager = self.get_manager(request)
         context = {
-            'title': 'My Feeds',
+            'title': 'Feed Subscriptions',
             'mediatypes': organizer.get_media_types(),
             'feeds': manager.get_feeds()
         }

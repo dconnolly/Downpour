@@ -1,5 +1,5 @@
-from downpour.web import common, account, downloads, feeds, search, settings
-from downpour.web import status, browse, libraries, users, work, remote, share
+from downpour.web import account, browse, downloads, feeds, libraries, remote, search
+from downpour.web import settings, status, share, users, work, common
 from twisted.web import static, server
 
 class SiteRoot(common.Resource):

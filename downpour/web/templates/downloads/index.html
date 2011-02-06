@@ -448,6 +448,19 @@
 			</div>
 		</form>
 	{% else %}
-		<p>There are no downloads in the queue.</p.
+		<p>There are no downloads in the queue.</p>
+	{% endif %}
+
+	{% if downloads %}
+		<div class="recently_completed">
+			<h4>Recently Completed</h4>
+			{% for h in history %}
+				<div class="recent_line">
+					<span class="recent_title">{{ h.description }}</span>
+					<span class="recent_type">({{ mediatypes[h.media_type] }})</span>
+					<span class="recent_timestamp"> downloaded at {{ h.completed|timestampformat('%Y/%m/%d %H:%M') }}</span><br />
+				</div>
+			{% endfor %}
+		</div>
 	{% endif %}
 {% endblock %}

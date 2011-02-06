@@ -62,9 +62,23 @@ class Root(common.AuthenticatedResource):
                     cmp = self.numcmp(True)
             downloads.sort(cmp, key, reverse)
 
-        context = {'title': 'My Downloads',
+        history = None
+        user = self.get_user(request)
+        if user.admin:
+            history = manager.store.find(models.Download,
+                models.Download.completed > 0
+                ).order_by(expr.Desc(models.Download.completed))[:10]
+        else:
+            history = manager.store.find(models.Download,
+                models.Download.completed > 0,
+                models.Download.user == user
+                ).order_by(expr.Desc(models.Download.completed))[:10]
+
+        context = {'title': 'Downloads',
                    'status': manager.get_status(),
                    'downloads': downloads,
+                   'history': history,
+                   'mediatypes': organizer.get_media_types(),
                    'sort': sort,
                    'sortdir': sortdir,
                    'clientFactory': lambda id: manager.get_download_client(id, True),

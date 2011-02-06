@@ -20,7 +20,7 @@ class Root(common.AuthenticatedResource):
         userlibs = manager.get_libraries()
         userdir = manager.get_library_directory()
         context = {
-            'title': 'My Libraries',
+            'title': 'Media Locations',
             'basedir': userdir,
             'mediatypes': organizer.get_media_types(),
             'patterns': organizer.get_file_patterns(),

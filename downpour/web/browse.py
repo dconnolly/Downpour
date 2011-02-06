@@ -98,7 +98,7 @@ class DirectoryIndex(static.DirectoryLister, common.Resource):
         relPath = self.path[len(manager.get_library_directory()):]
         dirs, files = self.getFilesAndDirectories(directory)
         context = {
-            'title': 'Files: %s/' % relPath,
+            'title': 'My Media: %s/' % relPath,
             'path': relPath,
             'directories': dirs,
             'files': files
