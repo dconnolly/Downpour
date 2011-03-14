@@ -182,6 +182,9 @@ class Application:
             need_init = False
             db_path = os.path.expanduser(self.options['downpour']['state'])
             if not os.access(db_path, os.F_OK):
+                db_dir = os.path.dirname(db_path)
+                if not os.path.exists(db_dir):
+                    os.makedirs(db_dir);
                 need_init = True
             database = create_database('sqlite:%s' % db_path)
             self.store = Store(database)
