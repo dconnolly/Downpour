@@ -12,7 +12,7 @@ class Application:
         'downpour': {
             'state': os.path.expanduser('~/.config/downpour/downpour.db'),
             'log': 'info',
-            'password': ''
+            'plugins': 'downpour.web.WebInterfacePlugin'
         },
         'downpour.remote.RemotePlugin': {
             'interface': '0.0.0.0',
@@ -280,6 +280,8 @@ class Application:
             pn = '%s.%s' % (plugin.__class__.__module__, plugin.__class__.__name__)
             if pn in self.options:
                 plugin.setup(self.options[pn]);
+            else:
+                plugin.setup({});
 
         # Drop privileges after plugin setup in case of privileged port usage
         self.drop_privileges()
