@@ -413,7 +413,7 @@ class Manager:
         return self.application.get_setting(name, default);
 
     def get_user_directory(self):
-        return os.path.expanduser(self.get_option(('downpour', 'user_directory'), '/tmp'))
+        return os.path.expanduser(self.get_option(('downpour', 'user_directory'), '~/Downloads'))
 
 class GlobalManager(Manager):
 
