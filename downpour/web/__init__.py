@@ -10,29 +10,35 @@ import os, math
 class WebInterfacePlugin(Plugin):
 
     def setup(self, config):
+
         # Listen for HTTP connections
-        if config is not None and config.get('port', 0) is not None:
-            templateLoader = PackageLoader('downpour.web', 'templates')
-            self.templateFactory = Environment(loader=templateLoader)
-            templateDir = os.path.dirname(templateLoader.get_source(
-                    self.templateFactory, 'base.html')[1]);
+        port = 6280
+        iface = '0.0.0.0'
 
-            # Custom filters for templateFactory
-            self.templateFactory.filters['progressbar'] = self.progressbar
-            self.templateFactory.filters['healthmeter'] = self.healthmeter
-            self.templateFactory.filters['intervalformat'] = self.intervalformat
-            self.templateFactory.filters['timestampformat'] = self.timestampformat
-            self.templateFactory.filters['workinglink'] = self.workinglink
-            self.templateFactory.filters['librarylink'] = self.librarylink
-
-            iface = '0.0.0.0'
+        if config is not None:
+            if 'port' in config:
+                port = int(config['port'])
             if 'interface' in config:
                 iface = config['interface']
-            root = SiteRoot(templateDir + '/media', self.application)
-            site = server.Site(root)
-            site.requestFactory = requestFactory(self)
-            site.sessionFactory = sessionFactory(self)
-            reactor.listenTCP(int(config['port']), site, interface=iface)
+
+        templateLoader = PackageLoader('downpour.web', 'templates')
+        self.templateFactory = Environment(loader=templateLoader)
+        templateDir = os.path.dirname(templateLoader.get_source(
+                self.templateFactory, 'base.html')[1]);
+
+        # Custom filters for templateFactory
+        self.templateFactory.filters['progressbar'] = self.progressbar
+        self.templateFactory.filters['healthmeter'] = self.healthmeter
+        self.templateFactory.filters['intervalformat'] = self.intervalformat
+        self.templateFactory.filters['timestampformat'] = self.timestampformat
+        self.templateFactory.filters['workinglink'] = self.workinglink
+        self.templateFactory.filters['librarylink'] = self.librarylink
+
+        root = SiteRoot(templateDir + '/media', self.application)
+        site = server.Site(root)
+        site.requestFactory = requestFactory(self)
+        site.sessionFactory = sessionFactory(self)
+        reactor.listenTCP(port, site, interface=iface)
 
     def progressbar(self, percentage, width=100, style=None, label=''):
         pixwidth = ''
