@@ -169,14 +169,14 @@ class Browse(common.AuthenticatedResource):
         downloadUrl = '%s/share/%s%%s?%s' % (self.share.address,
             fullpath.replace('%', '%%'), authParams)
         response = client.getPage(str(url))
-        response.addCallback(self.listing_success, downloadUrl, request)
+        response.addCallback(self.listing_success, downloadUrl, fullpath, request)
         response.addErrback(self.listing_failed, request)
 
-    def listing_success(self, unparsed, downloadUrl, request):
+    def listing_success(self, unparsed, downloadUrl, fullpath, request):
         manager = self.get_manager(request)
         listing = self.parse_listing(unparsed)
         context = {
-            'title': '%s: /%s' % (self.share.name, urllib.unquote(self.path)),
+            'title': '%s: /%s' % (self.share.name, urllib.unquote(fullpath)),
             'downloadUrl': downloadUrl,
             'path': self.path,
             'directories': listing[0],
