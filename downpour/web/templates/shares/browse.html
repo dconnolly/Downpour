@@ -25,7 +25,7 @@
                     <td><img src="/media/images/folder.png"/></td>
                     <td><a href="{{ d.href }}">{{ d.text }}</a></td>
                     <td>&nbsp;</td>
-                    <td align="right"><a title="Add as new feed subscription" href="/feeds/add?url={{ downloadUrl % d.href }}%26rss=1&name=%22{{ path|e }}{{ d.text|e }}%22+on+{{ share.name }}"><img src="/media/images/add.gif"/></a></td>
+                    <td align="right"><a title="Add as new feed subscription" href="/feeds/add?url={{ downloadUrl % d.href }}%26rss=1&name={{ d.name|e }}"><img src="/media/images/add.gif"/></a></td>
                 </tr>
                 {% endfor %}
                 {% for f in files %}
