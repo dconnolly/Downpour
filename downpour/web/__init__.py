@@ -5,7 +5,7 @@ from downpour.core.plugins import Plugin
 from downpour.web.common import requestFactory, sessionFactory
 from downpour.web.site import SiteRoot
 from datetime import datetime
-import os, math
+import os, math, urllib
 
 class WebInterfacePlugin(Plugin):
 
@@ -31,6 +31,7 @@ class WebInterfacePlugin(Plugin):
         self.templateFactory.filters['healthmeter'] = self.healthmeter
         self.templateFactory.filters['intervalformat'] = self.intervalformat
         self.templateFactory.filters['timestampformat'] = self.timestampformat
+        self.templateFactory.filters['urlencode'] = urllib.urlencode
         self.templateFactory.filters['workinglink'] = self.workinglink
         self.templateFactory.filters['librarylink'] = self.librarylink
 
