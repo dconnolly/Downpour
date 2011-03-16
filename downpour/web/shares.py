@@ -3,7 +3,7 @@ from downpour.core import models
 from storm import expr
 from twisted.web import server, client
 from twisted.python.failure import Failure
-import json
+import json, urllib
 
 class Root(common.AuthenticatedResource):
 
@@ -176,7 +176,7 @@ class Browse(common.AuthenticatedResource):
         manager = self.get_manager(request)
         listing = self.parse_listing(unparsed)
         context = {
-            'title': '%s: /%s' % (self.share.name, self.path),
+            'title': '%s: /%s' % (self.share.name, urllib.unquote(self.path)),
             'downloadUrl': downloadUrl,
             'path': self.path,
             'directories': listing[0],

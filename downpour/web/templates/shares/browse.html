@@ -32,7 +32,7 @@
                 <tr>
                     <td><img src="/media/images/file.png"/></td>
                     <td><a title="Add to queue" href="/downloads/add/url?url={{ downloadUrl|format(f.href)|urlencode }}">{{ f.text }}</td>
-                    <td>{{ f.size }}</td>
+                    <td>{{ f.size|filesizeformat }}</td>
                     <td align="right"><a href="/downloads/add/url?url={{ downloadUrl|format(f.href)|urlencode }}"><img src="/media/images/download.png"/></a></td>
                 </tr>
                 {% endfor %}
