@@ -23,17 +23,17 @@
                 {% for d in directories %}
                 <tr>
                     <td><img src="/media/images/folder.png"/></td>
-                    <td><a href="{{ d.href }}">{{ d.text }}</a></td>
+                    <td><a href="{{ d.href|urlencode }}">{{ d.text }}</a></td>
                     <td>&nbsp;</td>
-                    <td align="right"><a title="Add as new feed subscription" href="/feeds/add?url={{ downloadUrl % d.href }}%26rss=1&name={{ d.name|urlencode }}"><img src="/media/images/add.gif"/></a></td>
+                    <td align="right"><a title="Add as new feed subscription" href="/feeds/add?url={{ downloadUrl|format(d.href)|urlencode }}%26rss=1&name={{ d.name|urlencode }}"><img src="/media/images/add.gif"/></a></td>
                 </tr>
                 {% endfor %}
                 {% for f in files %}
                 <tr>
                     <td><img src="/media/images/file.png"/></td>
-                    <td><a title="Add to queue" href="/downloads/add/url?url={{ downloadUrl % f.href }}">{{ f.text }}</td>
+                    <td><a title="Add to queue" href="/downloads/add/url?url={{ downloadUrl|format(f.href)|urlencode }}">{{ f.text }}</td>
                     <td>{{ f.size }}</td>
-                    <td align="right"><a href="/downloads/add/url?url={{ downloadUrl % f.href }}"><img src="/media/images/download.png"/></a></td>
+                    <td align="right"><a href="/downloads/add/url?url={{ downloadUrl|format(f.href)|urlencode }}"><img src="/media/images/download.png"/></a></td>
                 </tr>
                 {% endfor %}
             </tbody>

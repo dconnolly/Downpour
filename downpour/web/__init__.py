@@ -31,7 +31,7 @@ class WebInterfacePlugin(Plugin):
         self.templateFactory.filters['healthmeter'] = self.healthmeter
         self.templateFactory.filters['intervalformat'] = self.intervalformat
         self.templateFactory.filters['timestampformat'] = self.timestampformat
-        self.templateFactory.filters['urlencode'] = urllib.urlencode
+        self.templateFactory.filters['urlencode'] = urllib.quote
         self.templateFactory.filters['workinglink'] = self.workinglink
         self.templateFactory.filters['librarylink'] = self.librarylink
 
@@ -138,3 +138,8 @@ class WebInterfacePlugin(Plugin):
     def timestampformat(self, timestamp, format):
         dt = datetime.fromtimestamp(timestamp)
         return dt.strftime(format)
+
+    def urlencode(self, url):
+        if url:
+            #return url
+            return urllib.urlencode(str(url))

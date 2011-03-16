@@ -36,7 +36,7 @@ class Root(SharedResource):
         rootFile = File(str(filepath))
         # This shit's kinda hacked in here, I really need to
         # get away from using static.File
-        rootFile.relpath = path
+        rootFile.relpath = ''
         rootFile.link = 'http://%s:%s/share%%s?username=%s&password=%s' % (
             request.getRequestHostname(),
             request.getHost().port,
@@ -51,7 +51,10 @@ class File(static.File):
 
     def getChild(self, path, request):
         childFile = static.File.getChild(self, path, request)
-        childFile.relpath = self.relpath
+        if path:
+            childFile.relpath = self.relpath + '/' + path
+        else:
+            childFile.relpath = self.relpath
         childFile.link = self.link
         return childFile
 
@@ -99,7 +102,7 @@ class DirectoryIndex(static.DirectoryLister, SharedResource):
             relpath = os.path.join(path, f['name'])
             if relpath[0] != '/':
                 relpath = '/' + relpath
-            f['url'] = self.link % relpath
+            f['url'] = self.link % urllib.quote(relpath)
         for d in dirs:
             subfiles = self.getFilesRecursive(
                 '%s/%s' % (directory, d['name']),

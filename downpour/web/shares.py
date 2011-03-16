@@ -139,12 +139,13 @@ class Delete(common.AuthenticatedResource):
 
 class Browse(common.AuthenticatedResource):
 
-    def __init__(self, share, path = ''):
+    def __init__(self, share, path = '', parent = None):
         common.AuthenticatedResource.__init__(self)
         self.share = share
         if path != '':
             path = path + '/'
         self.path = path
+        self.parent = parent
 
     def render_GET(self, request):
         self.show_listing(request)
@@ -154,13 +155,19 @@ class Browse(common.AuthenticatedResource):
         if (path == ''):
             return self
         else:
-            return Browse(self.share, path)
+            parent = self.path
+            if self.parent:
+                parent = self.parent + parent
+            return Browse(self.share, path, parent)
 
     def show_listing(self, request):
+        fullpath = self.path
+        if self.parent:
+            fullpath = self.parent + fullpath
         authParams = 'username=%s&password=%s' % (self.share.username, self.share.password)
-        url = '%s/share/%s?%s' % (self.share.address, self.path, authParams)
-        downloadUrl = '%s/share/%s%%s?%s' % (self.share.address, self.path, authParams)
-        downloadUrl = downloadUrl.replace('&', '%%26')
+        url = '%s/share/%s?%s' % (self.share.address, fullpath, authParams)
+        downloadUrl = '%s/share/%s%%s?%s' % (self.share.address,
+            fullpath.replace('%', '%%'), authParams)
         response = client.getPage(str(url))
         response.addCallback(self.listing_success, downloadUrl, request)
         response.addErrback(self.listing_failed, request)
@@ -181,6 +188,7 @@ class Browse(common.AuthenticatedResource):
         request.finish()
 
     def listing_failed(self, failure, request):
+        failure.printTraceback()
         request.write(
             self.render_template('errors/error.html', request, {
                 'title': 'Could not retrieve directory listing',
