@@ -64,20 +64,25 @@ class Save(common.AuthenticatedResource):
     def render_POST(self, request):
         newpass = request.args.get('new_password', (None,))[0]
         newpass2 = request.args.get('confirm_password', (None,))[0]
+        sharepass = request.args.get('share_password', (None,))[0]
         errors = ''
-        if newpass is None or newpass == '':
-            errors = ''.join((errors, '<li>New password is empty</li>'))
-        if newpass2 is None or newpass == '':
-            errors = ''.join((errors, '<li>Confirm password is empty</li>'))
-        if newpass != newpass2:
-            errors = ''.join((errors, '<li>Passwords do not match</li>'))
+        if newpass is not None and newpass != '':
+            if newpass2 is None or newpass2 == '':
+                errors = ''.join((errors, '<li>Confirm password is empty</li>'))
+            if newpass != newpass2:
+                errors = ''.join((errors, '<li>Passwords do not match</li>'))
         if len(errors) > 0:
             context = {'title': 'Update My Account', 'error': errors}
             return self.render_template('account/edit.html', request, context)
         else:
             account = request.getSession(auth.IAccount)
-            account.user.password = unicode(newpass)
-            # TODO Save to database
+            if newpass is not None and newpass != '':
+                account.user.password = unicode(newpass)
+            if sharepass is not None and sharepass != '':
+                account.user.share_password = unicode(sharepass)
+            manager = self.get_manager(request)
+            # Save to database
+            manager.store.commit()
             request.redirect('/account/saved')
             request.finish()
             return server.NOT_DONE_YET
@@ -85,5 +90,5 @@ class Save(common.AuthenticatedResource):
 class Saved(common.AuthenticatedResource):
 
     def render_GET(self, request):
-        context = {'title': 'Password Changed'}
+        context = {'title': 'Account Saved'}
         return self.render_template('account/saved.html', request, context)

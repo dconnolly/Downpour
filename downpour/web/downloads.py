@@ -140,7 +140,7 @@ class AddURL(common.AuthenticatedResource):
         common.AuthenticatedResource.__init__(self)
         self.putChild('', self)
 
-    def render_POST(self, request):
+    def render(self, request):
         if 'url' in request.args and len(request.args['url'][0]) > 0:
             d = models.Download()
             d.url = unicode(request.args['url'][0])

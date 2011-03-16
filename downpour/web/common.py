@@ -1,5 +1,6 @@
 from twisted.web import resource, server, error
 from downpour.core import VERSION, models
+from storm import expr
 import auth
 import os, hashlib, logging
 
@@ -78,16 +79,30 @@ class Resource(resource.Resource):
         return None
 
     def render_template(self, template, request, context):
+
         unsupported = False
         ua = request.getHeader('User-Agent')
         if ua.find('MSIE 6') > -1:
             unsupported = True
+
+        manager = self.get_manager(request)
+        user = self.get_user(request)
+        shares = []
+
+        if manager is not None:
+            shares = manager.store.find(models.RemoteShare,
+                models.RemoteShare.user == user
+                ).order_by(expr.Asc(models.RemoteShare.name))
+
         defaults = {
             'version': VERSION,
             'unsupported': unsupported,
-            'user': request.getSession(auth.IAccount).user
+            'user': user,
+            'shares': shares
             }
+
         defaults.update(context);
+
         try:
             t = request.templateFactory.get_template(template)
         except Exception as e:

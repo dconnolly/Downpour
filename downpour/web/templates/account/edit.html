@@ -24,6 +24,10 @@
 				<td><input type="password" name="confirm_password" size="15"/></td>
 			</tr>
 			<tr>
+				<td>Sharing Password</td>
+				<td><input type="text" name="share_password" size="15" value="{{ user.share_password|d('', true) }}"/></td>
+			</tr>
+			<tr>
 				<td>&nbsp;</td>
 				<td><input type="submit" value="Change Password"/></td>
 			</tr>

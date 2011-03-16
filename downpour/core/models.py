@@ -28,7 +28,23 @@ class User(object):
     directory = Unicode()
     max_downloads = Int()
     max_rate = Int()
+    share_enabled = Bool()
+    share_password = Unicode()
+    share_max_rate = Int()
     admin = Bool()
+
+class RemoteShare(object):
+
+    __storm_table__ = 'remote_shares'
+
+    id = Int(primary=True)
+    user_id = Int()
+    name = Unicode()
+    address = Unicode()
+    username = Unicode()
+    password = Unicode()
+
+    user = Reference(user_id, User.id)
 
 class Option(object):
 
@@ -38,8 +54,6 @@ class Option(object):
     user_id = Int()
     name = Unicode()
     value = Unicode()
-    queue_size = Int()
-    save_priority = Int()
 
     user = Reference(user_id, User.id)
 

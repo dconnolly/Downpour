@@ -27,7 +27,20 @@ def initialize_db(store):
         "directory TEXT," +
         "max_downloads INTEGER," +
         "max_rate INTEGER," +
+        "share_enabled BOOLEAN," +
+        "share_password TEXT," +
+        "share_max_rate INTEGER," +
         "admin BOOLEAN" +
+        ")")
+
+    store.execute("CREATE TABLE remote_shares (" +
+        "id INTEGER PRIMARY KEY," +
+        "user_id INTEGER," +
+        "name TEXT," +
+        "address TEXT," +
+        "username TEXT," +
+        "password TEXT," +
+        "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
         ")")
 
     store.execute("CREATE TABLE options (" +
@@ -149,6 +162,29 @@ def upgrade_database(application):
         return schema_upgraders[VERSION](application, version)
     return False
 
+def upgrade_to_0_2_1(application, version):
+    upgraded = True
+    if version != '0.2':
+        upgraded = upgrade_to_0_2(application, version)
+    if upgraded:
+        logging.debug('Upgrading database from v0.2 to v0.2.1')
+        store = application.get_store()
+        store.execute("ALTER TABLE users ADD COLUMN share_enabled BOOLEAN")
+        store.execute("ALTER TABLE users ADD COLUMN share_password TEXT")
+        store.execute("ALTER TABLE users ADD COLUMN share_max_rate INTEGER")
+        store.execute("CREATE TABLE remote_shares (" +
+            "id INTEGER PRIMARY KEY," +
+            "user_id INTEGER," +
+            "name TEXT," +
+            "address TEXT," +
+            "username TEXT," +
+            "password TEXT," +
+            "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
+            ")")
+
+        store.execute("UPDATE STATE SET value = '0.2.1' WHERE name = 'schema_version'")
+    return upgraded
+
 def upgrade_to_0_2(application, version):
     upgraded = True
     if version != '0.1.1':
@@ -182,6 +218,7 @@ def upgrade_to_0_1_1pre(application, version):
 
 # Add new upgraders to this dict
 schema_upgraders = {
+    '0.2.1': upgrade_to_0_2_1,
     '0.2': upgrade_to_0_2,
     '0.1.1': upgrade_to_0_1_1,
     '0.1.1pre': upgrade_to_0_1_1pre

@@ -34,14 +34,22 @@ class Add(common.AuthenticatedResource):
 
     def render_GET(self, request):
         manager = self.get_manager(request)
+
+        feed = {
+            'active': True,
+            'media_type': 'video/tv',
+            'update_frequency': 15,
+            'queue_size': 0,
+            'save_priority': 0 }
+
+        if 'url' in request.args:
+            feed['url'] = request.args['url'][0]
+        if 'name' in request.args:
+            feed['name'] = request.args['name'][0]
+
         context = {
             'title': 'Add Feed',
-            'feed': {
-                'active': True,
-                'media_type': 'video/tv',
-                'update_frequency': 15,
-                'queue_size': 0,
-                'save_priority': 0},
+            'feed': feed,
             'mediatypes': organizer.get_media_types()
         }
         return self.render_template('feeds/form.html', request, context)

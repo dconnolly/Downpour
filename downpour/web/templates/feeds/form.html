@@ -18,11 +18,11 @@
 		<table border="0" cellpadding="0" cellspacing="0" class="detail">
 			<tr>
 				<td class="label">Feed name</td>
-				<td class="value"><input id="focusonload" type="text" name="name" value="{{ feed.name }}"/></td>
+				<td class="value"><input id="focusonload" type="text" size="40" name="name" value="{{ feed.name|e }}"/></td>
 			</tr>
 			<tr>
 				<td class="label">URL</td>
-				<td class="value"><input type="text" size="40" name="url" value="{{ feed.url }}"/></td>
+				<td class="value"><input type="text" size="40" name="url" value="{{ feed.url|e }}"/></td>
 			</tr>
 			<tr>
 				<td class="label">Media Type</td>

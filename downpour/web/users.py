@@ -100,6 +100,9 @@ class Save(common.AdminResource):
             'directory': lambda v: unicode(v),
             'max_downloads': lambda v: int(v),
             'max_rate': lambda v: int(v),
+            'share_enabled': lambda v: bool(v),
+            'share_password': lambda v: unicode(v),
+            'share_max_rate': lambda v: int(v),
             'admin': lambda v: bool(v)
         }
 
@@ -117,6 +120,9 @@ class Save(common.AdminResource):
                 continue
             if hasattr(user, k) and k in converters:
                 setattr(user, k, converters[k](request.args[k][0]))
+        # Boolean special handling from forms
+        if not 'share_enabled' in request.args:
+            user.share_enabled = False
         manager.store.commit()
 
         request.redirect('/users')
