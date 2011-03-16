@@ -25,14 +25,18 @@ class XBMCRemote:
     # Update media libraries (scan for new files)
     def update(self, type=None):
         if type == 'audio' or type is None:
-            return self.call('AudioLibrary.ScanForContent')
+            return self.call_http('ExecBuiltIn(UpdateLibrary(music))')
         if type == 'video' or type is None:
-            return self.call('VideoLibrary.ScanForContent')
+            return self.call_http('ExecBuiltIn(UpdateLibrary(video))')
+        #if type == 'audio' or type is None:
+        #    return self.call('AudioLibrary.ScanForContent')
+        #if type == 'video' or type is None:
+        #    return self.call('VideoLibrary.ScanForContent')
 
     # Clean media libraries (remove missing files)
     def clean(self, type=None):
         if type == 'audio' or type is None:
-            return self.call_http('ExecBuiltIn(CleanLibrary(audio))')
+            return self.call_http('ExecBuiltIn(CleanLibrary(music))')
         if type == 'video' or type is None:
             return self.call_http('ExecBuiltIn(CleanLibrary(video))')
 
