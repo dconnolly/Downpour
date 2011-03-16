@@ -65,6 +65,11 @@ class XBMCRemote:
 
     def call_raw(self, payload):
 
+        authHeaders = None
+        if self.username:
+            authHeaders = {'Authorization': 'Basic %s' % base64.b64encode(
+                    '%s:%s' % (self.username, self.password)) }
+
         response = getPage('%s/jsonrpc' % self.server,
             agent='Downpour %s' % VERSION,
             headers={'Authorization': 'Basic %s' % base64.b64encode(
@@ -106,10 +111,15 @@ class XBMCRemote:
     def call_http(self, method, multi=True, asdict=True):
 
         url = '%s/xbmcCmds/xbmcHttp?command=%s' % (self.server, method)
+
+        authHeaders = None
+        if self.username:
+            authHeaders = {'Authorization': 'Basic %s' % base64.b64encode(
+                '%s:%s' % (self.username, self.password)) }
+
         response = getPage(url,
             agent='Downpour %s' % VERSION,
-            headers={'Authorization': 'Basic %s' % base64.b64encode(
-                '%s:%s' % (self.username, self.password)) })
+            headers=authHeaders)
 
         # Chain to a new deferred to do response parsing
         dfr = Deferred()
