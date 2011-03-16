@@ -9,9 +9,9 @@
         {% for f in files %}
         <item> 
             <title>{{ f.text|e }}</title> 
-            <link>{{ f.url|e }}</link> 
+            <link>{{ f.url|e|replace(' ', '%20') }}</link> 
             <pubDate>{{ f.modtime|timestampformat('%a, %d %b %Y %H:%M:%S UTC') }}</pubDate> 
-            <guid>{{ f.url|e }}</guid>
+            <guid>{{ f.url|e|replace(' ', '%20') }}</guid>
         </item>
         {% endfor %}
     </channel>
