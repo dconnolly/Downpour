@@ -22,7 +22,7 @@ class WebInterfacePlugin(Plugin):
                 iface = config['interface']
 
         if iface is None:
-            iface = self.application.get_option(('downpour', 'interface'), '0.0.0.0')
+            iface = '0.0.0.0'
 
         templateLoader = PackageLoader('downpour.web', 'templates')
         self.templateFactory = Environment(loader=templateLoader)
