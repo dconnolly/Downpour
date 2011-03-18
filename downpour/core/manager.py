@@ -6,7 +6,7 @@ from twisted.web import http
 from twisted.internet import threads, defer
 from time import time
 from urlparse import urlparse
-import feedparser, os, mimetypes, logging, tempfile, shutil
+import feedparser, os, mimetypes, logging, tempfile, shutil, urllib
 
 class Manager:
 
@@ -86,7 +86,9 @@ class Manager:
             if not d.description:
                 d.description = d.url
             if not d.filename:
-                d.filename = unicode(os.path.basename(http.urlparse(str(d.url))[2]))
+                d.filename = unicode(urllib.unquote(
+                    os.path.basename(http.urlparse(str(d.url))[2])
+                    ))
 
         # Rather than guess mimetypes, just let default downloaders grab
         # the file and pass it off to secondary handlers if needed

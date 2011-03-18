@@ -4,7 +4,7 @@ from twisted.web import http
 from twisted.web.client import HTTPDownloader, _makeGetterFactory
 from twisted.internet import defer
 from twisted.protocols.htb import ShapedProtocolFactory
-import time, os, logging
+import time, os
 
 class HTTPDownloadClient(DownloadClient):
 
@@ -35,6 +35,11 @@ class HTTPDownloadClient(DownloadClient):
         self.download_rate = rate
         self.factory.setRateLimit(rate)
 
+    def get_files(self):
+        return ({'path': self.download.filename,
+                 'size': self.download.size,
+                 'progress': self.download.progress},)
+
 class DownloadStatus(object):
     
     def __init__(self, download):
@@ -42,6 +47,7 @@ class DownloadStatus(object):
         self.bytes_start = 0
         self.bytes_downloaded = 0
         self.start_time = 0
+        self.start_elapsed = 0
 
     def onConnect(self, downloader):
         self.download.status = Status.STARTING
@@ -56,7 +62,7 @@ class DownloadStatus(object):
                 self.download.status = Status.COMPLETED
             else:
                 self.download.status = Status.STOPPED
-        self.download.elapsed =  self.download.elapsed + (time.time() - self.start_time)
+        self.download.elapsed = self.download.elapsed + (time.time() - self.start_time)
 
     def onHeaders(self, downloader, headers):
         contentLength = 0
@@ -81,6 +87,7 @@ class DownloadStatus(object):
 
     def onStart(self, downloader, partialContent):
         self.start_time = time.time()
+        self.start_elapsed = self.download.elapsed
         self.download.status = Status.RUNNING
         self.download.health = 100
 
@@ -92,6 +99,7 @@ class DownloadStatus(object):
         self.download_rate = (self.bytes_downloaded - self.bytes_start) / (time.time() - self.start_time)
         self.download.downloadrate = self.download_rate
         self.download.downloaded = self.bytes_downloaded
+        self.download.elapsed = self.start_elapsed + (time.time() - self.start_time)
         if self.download.size:
             self.download.timeleft = float(self.download.size - self.bytes_downloaded) / self.download_rate
 
