@@ -48,6 +48,9 @@ class DownloadStatus(object):
         self.bytes_downloaded = 0
         self.start_time = 0
         self.start_elapsed = 0
+        self.download_rate = 0
+        self.last_rate_sample = 0
+        self.rate_samples = []
 
     def onConnect(self, downloader):
         self.download.status = Status.STARTING
@@ -96,11 +99,28 @@ class DownloadStatus(object):
         if self.download.size:
             self.download.progress = (float(self.bytes_downloaded)
                 / float(self.download.size)) * 100
-        self.download_rate = (self.bytes_downloaded - self.bytes_start) / (time.time() - self.start_time)
+
+        now = int(time.time())
+        if self.last_rate_sample == 0:
+            self.last_rate_sample = now
+            self.rate_samples.insert(0, self.bytes_downloaded)
+        elif now > self.last_rate_sample:
+            for i in range(self.last_rate_sample, now):
+                self.rate_samples.insert(0, self.bytes_downloaded)
+            while len(self.rate_samples) > 10:
+                self.rate_samples.pop()
+            if len(self.rate_samples) > 1:
+                rate_diff = []
+                for i in range(0, len(self.rate_samples)-1):
+                    rate_diff.append(self.rate_samples[i] - self.rate_samples[i+1])
+                self.download_rate = float(sum(rate_diff)) / len(rate_diff)
+            self.last_rate_sample = now
+
         self.download.downloadrate = self.download_rate
+
         self.download.downloaded = self.bytes_downloaded
-        self.download.elapsed = self.start_elapsed + (time.time() - self.start_time)
-        if self.download.size:
+        self.download.elapsed = self.start_elapsed + (now - self.start_time)
+        if self.download.size and self.download_rate:
             self.download.timeleft = float(self.download.size - self.bytes_downloaded) / self.download_rate
 
     def onEnd(self, downloader):
