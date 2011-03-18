@@ -13,13 +13,16 @@ class WebInterfacePlugin(Plugin):
 
         # Listen for HTTP connections
         port = 6280
-        iface = '0.0.0.0'
+        iface = None
 
         if config is not None:
             if 'port' in config:
                 port = int(config['port'])
             if 'interface' in config:
                 iface = config['interface']
+
+        if iface is None:
+            iface = self.application.get_option(('downpour', 'interface'), '0.0.0.0')
 
         templateLoader = PackageLoader('downpour.web', 'templates')
         self.templateFactory = Environment(loader=templateLoader)

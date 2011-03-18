@@ -24,21 +24,23 @@ class XBMCRemote:
 
     # Update media libraries (scan for new files)
     def update(self, type=None):
-        if type == 'audio' or type is None:
-            return self.call_http('ExecBuiltIn(UpdateLibrary(music))')
-        if type == 'video' or type is None:
-            return self.call_http('ExecBuiltIn(UpdateLibrary(video))')
         #if type == 'audio' or type is None:
-        #    return self.call('AudioLibrary.ScanForContent')
+        #    self.call_http('ExecBuiltIn(UpdateLibrary(music))')
         #if type == 'video' or type is None:
-        #    return self.call('VideoLibrary.ScanForContent')
+        #    self.call_http('ExecBuiltIn(UpdateLibrary(video))')
+        if type == 'audio' or type is None:
+            self.call('AudioLibrary.ScanForContent')
+        if type == 'video' or type is None:
+            self.call('VideoLibrary.ScanForContent')
 
     # Clean media libraries (remove missing files)
+    # The preferred way to do this is to just configure XBMC to
+    # clean on updated (in XBMC settings)
     def clean(self, type=None):
         if type == 'audio' or type is None:
-            return self.call_http('ExecBuiltIn(CleanLibrary(music))')
+            self.call_http('ExecBuiltIn(CleanLibrary(music))')
         if type == 'video' or type is None:
-            return self.call_http('ExecBuiltIn(CleanLibrary(video))')
+            self.call_http('ExecBuiltIn(CleanLibrary(video))')
 
     # Check status of media players (video, audio, pictures)
     def get_active_players(self):
@@ -106,8 +108,8 @@ class XBMCRemote:
             else:
                 dfr.callback(parsed['result'])
 
-    # Use deprecated HTTP API (some methods are not support
-    # on the JSON API yet)
+    # Use deprecated HTTP API (some methods are not supported
+    # in the JSON API yet)
     def call_http(self, method, multi=True, asdict=True):
 
         url = '%s/xbmcCmds/xbmcHttp?command=%s' % (self.server, method)

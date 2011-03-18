@@ -12,11 +12,11 @@ class Application:
         'downpour': {
             'state': os.path.expanduser('~/.config/downpour/downpour.db'),
             'log': 'info',
+            'interface': '0.0.0.0',
             'plugins': 'downpour.web.WebInterfacePlugin'
         },
-        'downpour.remote.RemotePlugin': {
-            'interface': '0.0.0.0',
-            'port': 6226
+        'downpour.web.WebInterfacePlugin': {
+            'port': 6280
         }
     }
 
@@ -66,8 +66,8 @@ class Application:
         if options:
             sections = {
                 'log': self.options['downpour'],
-                'port': self.options['downpour.remote.RemotePlugin'],
-                'interface': self.options['downpour.remote.RemotePlugin']
+                'interface': self.options['downpour'],
+                'port': self.options['downpour.web.WebInterfacePlugin']
             }
             for key in options:
                 if options[key] is not None and sections.has_key(key):
