@@ -8,7 +8,7 @@ parser.add_option("-c", "--config", default="/etc/downpour.cfg",
 parser.add_option("-a", "--address", dest="interface",
                     help="Name or IP address to listen on")
 parser.add_option("-p", "--port", dest="port", type="int",
-                    help="Port to listen on")
+                    help="Port to listen on for web interface")
 parser.add_option("--pid-file", default="/var/run/downpour.pid", dest="pidfile",
                     help="File to write daemon's PID to")
 parser.add_option("--stderr", default="/dev/null", dest="stderr",
