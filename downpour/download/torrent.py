@@ -169,7 +169,7 @@ class LibtorrentClient(DownloadClient):
         try:
             ip = lt_manager.get_interface(interface)
         except Exception as e:
-            raise Exception('The specified network interface is not available')
+            raise Exception('The specified network interface is not available: %s' % interface)
             
         lt_manager.listen(interface)
         if not self.torrent is None and not ip is None:
