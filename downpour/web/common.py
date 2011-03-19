@@ -2,7 +2,7 @@ from twisted.web import resource, server, error
 from downpour.core import VERSION, models
 from storm import expr
 import auth
-import os, hashlib, logging
+import os, hashlib
 
 def requestFactory(plugin):
     def factory(*args, **kwargs):
@@ -54,10 +54,7 @@ class Resource(resource.Resource):
         account = request.getSession(auth.IAccount)
         if not account.user:
             userinfo = request.getCookie('DOWNPOUR_USER');
-            logging.debug(userinfo)
             if userinfo:
-                logging.debug('not none')
-                logging.debug(userinfo.__class__)
                 (userid, userhash) = userinfo.split(':', 1)
                 user = request.application.get_store().find(models.User,
                     models.User.id == int(userid)).one()
