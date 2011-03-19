@@ -26,6 +26,8 @@ class Login(common.Resource):
             start = referrer.find('/', referrer.find('//') + 2)
             referrer = referrer[start:]
         context = {'title': 'Login', 'redirect': referrer}
+        if request.args['logout']:
+            context['message'] = 'You have been logged out.'
         return self.render_template('account/login.html', request, context)
 
     def render_POST(self, request):
@@ -50,8 +52,9 @@ class Logout(common.Resource):
 
     def render_GET(self, request):
         self.set_user(None, request);
-        context = {'title': 'Login', 'message': 'You have been logged out.'}
-        return self.render_template('account/login.html', request, context)
+        request.redirect('/account/login?logout=1')
+        request.finish()
+        return server.NOT_DONE_YET
 
 class Edit(common.AuthenticatedResource):
 

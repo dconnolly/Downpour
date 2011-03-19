@@ -1,10 +1,11 @@
 from downpour.core import VERSION
+from downpour.core.net import get_interface
 from downpour.download import *
 from twisted.internet import defer, task, reactor
 from twisted.web import client
 from twisted.python import failure
 import libtorrent as lt
-import os, marshal, math, sys, socket, logging, fcntl, struct
+import os, marshal, math, sys, socket, logging
 
 class LibtorrentManager:
 
@@ -108,39 +109,12 @@ class LibtorrentManager:
 
     # Set comm interface (useful for routing torrent traffic over VPN, etc)
     def listen(self, interface=None):
-        ip = self.get_interface(interface)
+        ip = get_interface(interface)
         if not ip is None:
             self.session.listen_on(6881, 6891, ip)
         else:
             self.session.listen_on(6881, 6891)
-
-    # Set comm interface (useful for routing torrent traffic over VPN, etc)
-    def get_interface(self, interface):
-        if not interface is None:
-            try:
-                ip = socket.gethostbyname(interface)
-                # Verify we got an IP
-                socket.inet_aton(ip)
-                return ip
-            except socket.error:
-                # Probably specified a local interface name
-                try:
-                    ip = self.get_device_ip(interface)
-                    # Verify we got an IP
-                    socket.inet_aton(ip)
-                    return ip
-                except socket.error:
-                    pass
-        return None
-
-    # Get the IP assigned to an interface name on linux
-    def get_device_ip(self, ifname):
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        return socket.inet_ntoa(fcntl.ioctl(
-            s.fileno(),
-            0x8915,  # SIOCGIFADDR
-            struct.pack('256s', ifname[:15])
-        )[20:24])
+        logging.debug(ip)
 
 # Single session manager
 lt_manager = LibtorrentManager()
@@ -167,7 +141,7 @@ class LibtorrentClient(DownloadClient):
 
         interface = self.manager.get_option(('downpour', 'interface'))
         try:
-            ip = lt_manager.get_interface(interface)
+            ip = get_interface(interface)
         except Exception as e:
             raise Exception('The specified network interface is not available: %s' % interface)
             

@@ -1,4 +1,5 @@
 from downpour.core import VERSION, models, organizer
+from downpour.core.net import get_interface
 from downpour.download import Status
 from downpour.download.http import HTTPDownloadClient
 from downpour.download.torrent import LibtorrentClient
@@ -6,7 +7,8 @@ from twisted.web import http
 from twisted.internet import threads, defer
 from time import time
 from urlparse import urlparse
-import feedparser, os, mimetypes, logging, tempfile, shutil, urllib
+import feedparser, os, mimetypes, logging, tempfile, shutil
+import urllib, socket
 
 class Manager:
 
@@ -61,7 +63,16 @@ class Manager:
         else:
             progress = 0
 
-        status = {'host': self.get_option(('downpour', 'interface'), 'localhost'),
+        interface = get_interface(self.get_option(
+            ('downpour', 'interface'), '0.0.0.0'))
+        if interface == '0.0.0.0':
+            # Load IPs for local host
+            ips = [i[4][0] for i in socket.getaddrinfo(socket.gethostname(), None)]
+            ips = filter(lambda ip: ip[:4] != '127.' and ip[:2] != '::', ips)
+            interface = ', '.join(dict(map(lambda i: (i,1), ips)).keys())
+        hostname = '%s (%s)' % (socket.gethostname(), interface)
+
+        status = {'host': hostname,
                 'version': VERSION,
                 'downloads': len(downloads),
                 'active_downloads': active_downloads,

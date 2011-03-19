@@ -54,7 +54,10 @@ class Resource(resource.Resource):
         account = request.getSession(auth.IAccount)
         if not account.user:
             userinfo = request.getCookie('DOWNPOUR_USER');
-            if userinfo is not None:
+            logging.debug(userinfo)
+            if userinfo:
+                logging.debug('not none')
+                logging.debug(userinfo.__class__)
                 (userid, userhash) = userinfo.split(':', 1)
                 user = request.application.get_store().find(models.User,
                     models.User.id == int(userid)).one()
@@ -69,7 +72,7 @@ class Resource(resource.Resource):
             userhash = hashlib.md5('%s:%s' % (user.username, user.password)).hexdigest()
             request.addCookie('DOWNPOUR_USER', '%s:%s' % (user.id, userhash), path='/')
         else:
-            request.addCookie('DOWNPOUR_USER', None, path='/', expires=-1)
+            request.addCookie('DOWNPOUR_USER', '', path='/', expires=-1)
         account.user = user
 
     def get_manager(self, request):
