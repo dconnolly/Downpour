@@ -368,7 +368,7 @@ class Manager:
             dl = [self.resume_download(d.id) \
                 for d in self.get_downloads() if d.active]
             self.auto_queue()
-            self.application.fire_event('downpour_resume')
+            self.application.fire_event('downpour_resumed')
             return defer.DeferredList(dl, consumeErrors=True)
         return defer.DeferredList([defer.succeed(False)])
 
