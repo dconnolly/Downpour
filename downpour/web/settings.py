@@ -26,6 +26,12 @@ class Save(common.AdminResource):
     def render_POST(self, request):
         for s in request.args:
             request.application.set_setting(unicode(s), unicode(request.args[s][0]))
+
+        # Force bandwidth filters to reload
+        manager = self.get_manager(request)
+        manager.get_upload_rate_filter()
+        manager.get_download_rate_filter()
+
         request.redirect('/')
         request.finish()
         return server.NOT_DONE_YET
