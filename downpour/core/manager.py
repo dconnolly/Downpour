@@ -1,6 +1,7 @@
 from downpour.core import VERSION, models, organizer
 from downpour.core.net import get_interface
-from downpour.download import Status, ThrottledBucketFilter
+from downpour.download import Status
+from downpour.download.throttling import ThrottledBucketFilter
 from downpour.download.http import HTTPDownloadClient
 from downpour.download.torrent import LibtorrentClient
 from twisted.web import http
@@ -512,17 +513,17 @@ class GlobalManager(Manager):
     def get_upload_rate_filter(self):
         max_ulrate = int(self.get_setting('upload_rate', 0)) * 1024
         if not self.upload_rate_filter:
-            self.upload_rate_filter = ThrottledBucketFilter(None, max_ulrate)
+            self.upload_rate_filter = ThrottledBucketFilter(max_ulrate)
         else:
-            self.upload_rate_filter.set_rate(max_ulrate)
+            self.upload_rate_filter.rate = max_ulrate
         return self.upload_rate_filter
 
     def get_download_rate_filter(self):
         max_dlrate = int(self.get_setting('download_rate', 0)) * 1024
         if not self.download_rate_filter:
-            self.download_rate_filter = ThrottledBucketFilter(None, max_dlrate)
+            self.download_rate_filter = ThrottledBucketFilter(max_dlrate)
         else:
-            self.download_rate_filter.set_rate(max_dlrate)
+            self.download_rate_filter.rate = max_dlrate
         return self.download_rate_filter
 
 class UserManager(Manager):

@@ -23,9 +23,6 @@ class ThrottledFile(File):
             @return: A L{ThrottledFileProducer}.  Calling C{.start()} on this will begin
             producing the response.
             """
-        bucket = None
-        if self.bucketFilter:
-            bucket = self.bucketFilter.getBucketFor(self)
 
         byteRange = request.getHeader('range')
         if byteRange is not None:
@@ -36,7 +33,7 @@ class ThrottledFile(File):
                         request, parsedRanges[0])
                     self._setContentHeaders(request, size)
                     return SingleRangeThrottledFileProducer(
-                        request, fileForReading, offset, size, bucket)
+                        request, fileForReading, offset, size, self.bucketFilter)
                 else:
                     log.msg("Multiple ranges not supported: %r" % (byteRange,))
             except ValueError:
@@ -44,7 +41,7 @@ class ThrottledFile(File):
 
         self._setContentHeaders(request)
         request.setResponseCode(http.OK)
-        return ThrottledFileProducer(request, fileForReading, bucket)
+        return ThrottledFileProducer(request, fileForReading, self.bucketFilter)
         
     def createSimilarFile(self, path):
         f = self.__class__(path, bucketFilter=self.bucketFilter,
@@ -68,13 +65,13 @@ class ThrottledFileProducer(object):
     bufferSize = abstract.FileDescriptor.bufferSize
     paused = True
 
-    def __init__(self, request, fileObject, bucket=None):
+    def __init__(self, request, fileObject, bucketFilter=None):
         """
         Initialize the instance.
         """
         self.request = request
         self.fileObject = fileObject
-        self.bucket = bucket
+        self.bucketFilter = bucketFilter
 
     def start(self):
         """
@@ -88,14 +85,15 @@ class ThrottledFileProducer(object):
         self.paused = True
 
     def resumeProducing(self):
-        self.paused = False
-        self._doWrite()
+        if self.paused:
+            self.paused = False
+            self._doWrite()
 
     def _doWrite(self):
         if not self.paused:
             amount = self.bufferSize
-            if self.bucket:
-                amount = self.bucket.add(amount)
+            if self.bucketFilter:
+                amount = self.bucketFilter.add(amount)
             if amount == 0:
                 # Reached bandwidth limit, startup again in a second
                 reactor.callLater(1, self._doWrite)
@@ -132,7 +130,7 @@ class SingleRangeThrottledFileProducer(ThrottledFileProducer):
     A L{ThrottledFileProducer} that writes a single chunk of a file to the request.
     """
 
-    def __init__(self, request, fileObject, offset, size, bucket=None):
+    def __init__(self, request, fileObject, offset, size, bucketFilter=None):
         """
         Initialize the instance.
 
@@ -141,7 +139,7 @@ class SingleRangeThrottledFileProducer(ThrottledFileProducer):
         @param offset: The offset into the file of the chunk to be written.
         @param size: The size of the chunk to write.
         """
-        ThrottledFileProducer.__init__(self, request, fileObject, bucket)
+        ThrottledFileProducer.__init__(self, request, fileObject, bucketFilter)
         self.offset = offset
         self.size = size
 

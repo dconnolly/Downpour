@@ -22,24 +22,6 @@ class Capabilities:
     MULTICONN = 1
     UPLOAD = 2
 
-class ThrottledBucketFilter(HierarchicalBucketFilter):
-
-    def __init__(self, parentFilter=None, rate=None):
-        HierarchicalBucketFilter.__init__(self, parentFilter)
-        self.bucket = None
-        if parentFilter:
-            self.bucket = Bucket(parentFilter.getBucketFor(self))
-        else:
-            self.bucket = Bucket()
-        if rate:
-            self.bucket.rate = rate
-            self.bucket.maxburst = rate * 5
-        self.bucketFactory = lambda p: self.bucket
-
-    def set_rate(self, rate):
-        self.bucket.rate = rate
-        self.bucket.maxburst = rate * 5
-
 class DownloadClientFactory:
 
     MIMETYPES = ['*']

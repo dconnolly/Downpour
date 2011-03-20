@@ -1,5 +1,6 @@
 from downpour.core import VERSION
 from downpour.download import *
+from downpour.download.throttling import ThrottledBucketFilter
 from twisted.web import http
 from twisted.web.client import HTTPDownloader, _makeGetterFactory
 from twisted.internet import defer
@@ -11,7 +12,7 @@ class HTTPDownloadClient(DownloadClient):
     def start(self):
         self.original_mimetype = self.download.mime_type
         self.download.status = Status.STARTING
-        bucketFilter = ThrottledBucketFilter(self.manager.get_download_rate_filter())
+        bucketFilter = ThrottledBucketFilter(0, self.manager.get_download_rate_filter())
         factoryFactory = lambda url, *a, **kw: HTTPManagedDownloader(str(self.download.url),
                                     os.path.join(self.directory, self.download.filename),
                                     statusCallback=DownloadStatus(self.download),
@@ -148,7 +149,7 @@ class HTTPManagedDownloader(HTTPDownloader):
 
     def setRateLimit(self, rate=None):
         if self.bucketFilter:
-            self.bucketFilter.getBucketFor(self).rate = rate
+            self.bucketFilter.rate = rate
 
     def renameFile(self, newName):
         fullName = os.path.sep.join((os.path.dirname(self.fileName),newName))
