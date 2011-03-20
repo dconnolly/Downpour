@@ -3,7 +3,7 @@ from downpour.web.static import ThrottledFile
 from downpour.core import models
 from twisted.web import static, server
 from datetime import datetime
-import os, shutil, urllib, cgi, json, time
+import os, shutil, urllib, cgi, json, time, logging
 
 class SharedResource(common.Resource):
 
@@ -56,6 +56,10 @@ class SharedFile(ThrottledFile):
             ignoredExts=ignoredExts, registry=registry, allowExt=allowExt)
         self.relpath = relpath
         self.link = link
+
+    def render_GET(self, request):
+        logging.info('GET %s from %s', (request.path, request,getClientIP())
+        return ThrottledFile.render_GET(self, request)
 
     def createSimilarFile(self, path):
         relpath = self.relpath
