@@ -1,5 +1,6 @@
 from twisted.internet import reactor
 from twisted.web import server
+from twisted.protocols.policies import ThrottlingFactory
 from jinja2 import Environment, PackageLoader
 from downpour.core.plugins import Plugin
 from downpour.core.net import get_interface
@@ -43,6 +44,7 @@ class WebInterfacePlugin(Plugin):
         site = server.Site(root)
         site.requestFactory = requestFactory(self)
         site.sessionFactory = sessionFactory(self)
+
         reactor.listenTCP(port, site, interface=get_interface(iface))
 
     def progressbar(self, percentage, width=100, style=None, label=''):

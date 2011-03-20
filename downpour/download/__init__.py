@@ -1,5 +1,5 @@
 from twisted.internet import defer
-from twisted.protocols.htb import HierarchicalBucketFilter
+from twisted.protocols.htb import Bucket, HierarchicalBucketFilter
 import tempfile, os, logging, shutil
 
 class Status:
@@ -26,20 +26,19 @@ class ThrottledBucketFilter(HierarchicalBucketFilter):
 
     def __init__(self, parentFilter=None, rate=None):
         HierarchicalBucketFilter.__init__(self, parentFilter)
-        self.rate = rate
-
-    def getBucketFor(self, *args, **kwargs):
-        bucket = HierarchicalBucketFilter.getBucketFor(self, *args, **kwargs)
-        bucket.rate = self.rate
-        if bucket.rate:
-            bucket.maxburst = bucket.rate * 5
+        self.bucket = None
+        if parentFilter:
+            self.bucket = Bucket(parentFilter.getBucketFor(self))
         else:
-            bucket.maxburst = None
-        return bucket
+            self.bucket = Bucket()
+        if rate:
+            self.bucket.rate = rate
+            self.bucket.maxburst = rate * 5
+        self.bucketFactory = lambda p: self.bucket
 
-# This should be the parent filter of every client that
-# implements rate-limiting via twisted.protocols.htb
-rateFilter = ThrottledBucketFilter()
+    def set_rate(self, rate):
+        self.bucket.rate = rate
+        self.bucket.maxburst = rate * 5
 
 class DownloadClientFactory:
 

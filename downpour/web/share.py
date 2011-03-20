@@ -1,4 +1,5 @@
 from downpour.web import common, auth
+from downpour.web.static import ThrottledFile
 from downpour.core import models
 from twisted.web import static, server
 from datetime import datetime
@@ -29,34 +30,44 @@ class Root(SharedResource):
         SharedResource.__init__(self, *args, **kwargs)
 
     def getChild(self, path, request):
+
         if not self.is_logged_in(request):
             return self
+
         manager = self.get_manager(request)
+        rateFilter = manager.get_upload_rate_filter()
+
         filepath = manager.get_library_directory()
-        rootFile = File(str(filepath))
-        # This shit's kinda hacked in here, I really need to
-        # get away from using static.File
-        rootFile.relpath = ''
-        rootFile.link = 'http://%s:%s/share%%s?username=%s&password=%s' % (
-            request.getRequestHostname(),
-            request.getHost().port,
-            request.args['username'][0],
-            request.args['password'][0])
+        rootFile = SharedFile(str(filepath), bucketFilter=rateFilter, relpath='',
+                link='http://%s:%s/share%%s?username=%s&password=%s' % (
+                    request.getRequestHostname(),
+                    request.getHost().port,
+                    request.args['username'][0],
+                    request.args['password'][0])
+            )
+
         return rootFile.getChild(path, request)
 
-class File(static.File):
+class SharedFile(ThrottledFile):
 
-    def __init__(self, *args, **kwargs):
-        static.File.__init__(self, *args, **kwargs)
+    def __init__(self, path, bucketFilter=None, defaultType="text/html", ignoredExts=(),
+            registry=None, allowExt=0, relpath='', link=None):
+        ThrottledFile.__init__(self, path, bucketFilter=bucketFilter, defaultType=defaultType,
+            ignoredExts=ignoredExts, registry=registry, allowExt=allowExt)
+        self.relpath = relpath
+        self.link = link
 
-    def getChild(self, path, request):
-        childFile = static.File.getChild(self, path, request)
+    def createSimilarFile(self, path):
+        relpath = self.relpath
         if path:
-            childFile.relpath = self.relpath + '/' + path
-        else:
-            childFile.relpath = self.relpath
-        childFile.link = self.link
-        return childFile
+            relpath = relpath + '/' + path
+        f = self.__class__(path, bucketFilter=self.bucketFilter,
+            defaultType=self.defaultType, ignoredExts=self.ignoredExts,
+            registry=self.registry, relpath=path, link=self.link)
+        f.processors = self.processors
+        f.indexNames = self.indexNames[:]
+        f.childNotFound = self.childNotFound
+        return f
 
     def directoryListing(self):
         lister = DirectoryIndex(

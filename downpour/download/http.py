@@ -11,10 +11,11 @@ class HTTPDownloadClient(DownloadClient):
     def start(self):
         self.original_mimetype = self.download.mime_type
         self.download.status = Status.STARTING
+        bucketFilter = ThrottledBucketFilter(self.manager.get_download_rate_filter())
         factoryFactory = lambda url, *a, **kw: HTTPManagedDownloader(str(self.download.url),
                                     os.path.join(self.directory, self.download.filename),
                                     statusCallback=DownloadStatus(self.download),
-                                    *a, **kw)
+                                    bucketFilter=bucketFilter, *a, **kw)
         self.factory = _makeGetterFactory(str(self.download.url), factoryFactory)
         self.factory.deferred.addCallback(self.check_mimetype);
         self.factory.deferred.addErrback(self.errback);
@@ -130,13 +131,14 @@ class DownloadStatus(object):
 
 class HTTPManagedDownloader(HTTPDownloader):
 
-    def __init__(self, url, file, statusCallback=None, *args, **kwargs):
+    def __init__(self, url, file, statusCallback=None, bucketFilter=None, *args, **kwargs):
         self.bytes_received = 0
         self.statusHandler = statusCallback
+        self.bucketFilter = bucketFilter
 
-        # Wrap protocol factory to enforce rate limits
-        self.bucketFilter = ThrottledBucketFilter(rateFilter)
-        self.protocol = ShapedProtocolFactory(self.protocol, self.bucketFilter)
+        # TODO: Apparently this only works for servers, not clients :/
+        #if self.bucketFilter:
+        #   self.protocol = ShapedProtocolFactory(self.protocol, self.bucketFilter)
 
         HTTPDownloader.__init__(self, url, file, supportPartial=1,
                                 agent='Downpour v%s' % VERSION,
@@ -145,7 +147,8 @@ class HTTPManagedDownloader(HTTPDownloader):
         self.origPartial = self.requestedPartial
 
     def setRateLimit(self, rate=None):
-        self.bucketFilter.rate = rate
+        if self.bucketFilter:
+            self.bucketFilter.getBucketFor(self).rate = rate
 
     def renameFile(self, newName):
         fullName = os.path.sep.join((os.path.dirname(self.fileName),newName))
@@ -199,8 +202,8 @@ class HTTPManagedDownloader(HTTPDownloader):
             self.statusHandler.onStop(self)
         HTTPDownloader.clientConnectionLost(self, connector, reason)
 
-def downloadFile(url, file, statusCallback=None, contextFactory=None, *args, **kwargs):
-    factoryFactory = lambda url, *a, **kw: HTTPManagedDownloader(url, file, statusCallback=statusCallback, *a, **kw)
+def downloadFile(url, file, statusCallback=None, bucketFilter=None, contextFactory=None, *args, **kwargs):
+    factoryFactory = lambda url, *a, **kw: HTTPManagedDownloader(url, file, statusCallback=statusCallback, bucketFilter=bucketFilter, *a, **kw)
     return _makeGetterFactory(
         url,
         factoryFactory,

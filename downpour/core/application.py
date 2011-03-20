@@ -1,7 +1,7 @@
 from twisted.internet import reactor, defer, protocol, task
 from downpour.feed import checker
 from downpour.core import db, plugins, manager, models
-import sys, os, pwd, grp, logging, ConfigParser, atexit
+import sys, os, pwd, grp, logging, ConfigParser, atexit, traceback
 from storm.locals import Store, create_database
 
 class Application:
@@ -100,6 +100,7 @@ class Application:
                         self.plugins.append(p)
                 except Exception as e:
                     print 'Plugin loading failed for %s: %s' % (pn, e)
+                    traceback.print_exc()
 
     def get_class(self, kls):
         parts = kls.split('.')
@@ -113,6 +114,14 @@ class Application:
         self.state = list(self.get_store().find(models.State))
         self.settings = list(self.get_store().find(models.Setting))
         self.manager = manager.GlobalManager(self)
+
+        # Initialize plugins
+        for plugin in self.plugins:
+            pn = '%s.%s' % (plugin.__class__.__module__, plugin.__class__.__name__)
+            if pn in self.options:
+                plugin.setup(self.options[pn]);
+            else:
+                plugin.setup({});
 
         # Resume downloads from previous session
         logging.debug('Resuming previous downloads')
@@ -275,14 +284,6 @@ class Application:
         return result
 
     def run(self):
-        # Initialize plugins
-        for plugin in self.plugins:
-            pn = '%s.%s' % (plugin.__class__.__module__, plugin.__class__.__name__)
-            if pn in self.options:
-                plugin.setup(self.options[pn]);
-            else:
-                plugin.setup({});
-
         # Drop privileges after plugin setup in case of privileged port usage
         self.drop_privileges()
 
