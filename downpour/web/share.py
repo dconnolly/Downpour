@@ -58,7 +58,8 @@ class SharedFile(ThrottledFile):
         self.link = link
 
     def render_GET(self, request):
-        logging.info('GET %s from %s', (request.path, request,getClientIP())
+        # TODO: Add sharing monitoring
+        logging.info('Request from %s: GET %s' % (request.getClientIP(), request.path))
         return ThrottledFile.render_GET(self, request)
 
     def createSimilarFile(self, path):
