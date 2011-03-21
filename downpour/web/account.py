@@ -26,7 +26,7 @@ class Login(common.Resource):
             start = referrer.find('/', referrer.find('//') + 2)
             referrer = referrer[start:]
         context = {'title': 'Login', 'redirect': referrer}
-        if request.args['logout']:
+        if 'logout' in request.args:
             context['message'] = 'You have been logged out.'
         return self.render_template('account/login.html', request, context)
 
