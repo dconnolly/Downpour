@@ -31,10 +31,10 @@
       'downloadrate': '{{ dl.downloadrate|filesizeformat|replace('Bytes','b') }}/s',
       'uploadrate': '{{ dl.uploadrate|filesizeformat|replace('Bytes','b') }}/s',
       'timeleft': '{{ dl.timeleft|intervalformat }}',
-      'running': {{ (client.is_running() and true)|lower }},
-      'startable': {{ (client.is_startable() and true)|lower }},
-      'stoppable': {{ (client.is_stoppable() and true)|lower }},
-      'finished': {{ (client.is_finished() and true)|lower }}
+      'running': {{ (client and client.is_running() and true)|lower }},
+      'startable': {{ (client and client.is_startable() and true)|lower }},
+      'stoppable': {{ (client and client.is_stoppable() and true)|lower }},
+      'finished': {{ (client and client.is_finished() and true)|lower }}
     }{% if not loop.last %},{% endif %}
     {%- endfor -%}
   {%- endif %}

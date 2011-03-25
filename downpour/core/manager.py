@@ -227,18 +227,21 @@ class Manager:
                 return dc
 
         if create:
-            clientdir = self.get_work_directory(d)
-            client = None
-            if d.mime_type and d.mime_type in self.client_mimetypes:
-                client = self.client_mimetypes[d.mime_type](d, self, clientdir)
-            elif d.url:
-                protocol = urlparse(d.url).scheme
-                if protocol in Manager.client_protocols:
-                    client = Manager.client_protocols[protocol](d, self, clientdir)
-            Manager.download_clients.append(client);
-            client.addCallback(self.download_complete, client, d)
-            client.addErrback(self.download_failed, client, d)
-            return client
+            try:
+                clientdir = self.get_work_directory(d)
+                client = None
+                if d.mime_type and d.mime_type in self.client_mimetypes:
+                    client = self.client_mimetypes[d.mime_type](d, self, clientdir)
+                elif d.url:
+                    protocol = urlparse(d.url).scheme
+                    if protocol in Manager.client_protocols:
+                        client = Manager.client_protocols[protocol](d, self, clientdir)
+                Manager.download_clients.append(client);
+                client.addCallback(self.download_complete, client, d)
+                client.addErrback(self.download_failed, client, d)
+                return client
+            except:
+                return None
 
     def download_complete(self, new_mimetype, dc, d):
         if new_mimetype:

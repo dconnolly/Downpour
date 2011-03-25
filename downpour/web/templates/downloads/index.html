@@ -359,7 +359,7 @@
 					{% set client = clientFactory(dl.id) %}
 					<tr id="download{{ dl.id }}" class="{{ loop.cycle('odd', 'even') }}">
 						<td id="download{{ dl.id }}_health" align="center">
-							{% if client.is_running() %}
+							{% if client and client.is_running() %}
 								{{ dl.health|healthmeter }}
 							{% else %}
 								&nbsp;
@@ -396,17 +396,17 @@
 							</div>
 						</td>
 						<td id="download{{ dl.id }}_dlrate" align="center" class="nowrap">
-							{% if client.is_running() %}
+							{% if client and client.is_running() %}
 								{{ dl.downloadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
 							{% endif %}
 						</td>
 						<td id="download{{ dl.id }}_ulrate" align="center" class="nowrap">
-							{% if client.is_running() and client.can_upload() %}
+							{% if client and client.is_running() and client.can_upload() %}
 								{{ dl.uploadrate|d(0,true)|filesizeformat|replace('Bytes','b') }}/s
 							{% endif %}
 						</td>
 						<td id="download{{ dl.id }}_timeleft" align="center" class="nowrap">
-							{% if client.is_running() %}
+							{% if client and client.is_running() %}
 								{{ dl.timeleft|intervalformat }}
 							{% else %}
 								&nbsp;
@@ -414,14 +414,14 @@
 						</td>
 						<td align="right" class="nowrap">
 							<span id="download{{ dl.id }}_actions">
-								{% if client.is_startable() %}
-									{% if client.is_finished() %}
+								{% if client and client.is_startable() %}
+									{% if client and client.is_finished() %}
 										<a href="/downloads/{{ dl.id }}/start"><img title="Seed download" src="/media/images/seed.png"/></a>
 									{% else %}
 										<a href="/downloads/{{ dl.id }}/start"><img title="Start download" src="/media/images/start.png"/></a>
 									{% endif %}
 								{% endif %}
-								{% if client.is_stoppable() %}
+								{% if client and client.is_stoppable() %}
 									<a href="/downloads/{{ dl.id }}/stop"><img title="Stop download" src="/media/images/stop.png"/></a>
 								{% endif %}
 							</span>
