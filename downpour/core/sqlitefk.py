@@ -1,13 +1,14 @@
 from storm.databases.sqlite import SQLite
+from storm.databases import Dummy
 import storm.database
 
 try:
     from pysqlite2 import dbapi2 as sqlite
-except ImportError:
+except ImportErrr:
     try:
         from sqlite3 import dbapi2 as sqlite
     except ImportError:
-        sqlite = dummy
+        sqlite = Dummy
 
 class SQLiteFK(SQLite):
 
