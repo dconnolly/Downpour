@@ -124,7 +124,7 @@ rename_patterns = {
     'video/movie': [
         '%n (%y).%x',
         '%N(%y).%x',
-        '%n %x',
+        '%n.%x',
         '%N.%x'
     ],
     'video/tv': [
