@@ -39,6 +39,7 @@ class Root(SharedResource):
 
         filepath = manager.get_library_directory()
         rootFile = SharedFile(str(filepath), bucketFilter=rateFilter, relpath='',
+                basepath=manager.get_library_directory(),
                 link='http://%s:%s/share%%s?username=%s&password=%s' % (
                     request.getRequestHostname(),
                     request.getHost().port,
@@ -51,9 +52,10 @@ class Root(SharedResource):
 class SharedFile(ThrottledFile):
 
     def __init__(self, path, bucketFilter=None, defaultType="text/html", ignoredExts=(),
-            registry=None, allowExt=0, relpath='', link=None):
+            registry=None, allowExt=0, relpath='', basepath='', link=None):
         ThrottledFile.__init__(self, path, bucketFilter=bucketFilter, defaultType=defaultType,
             ignoredExts=ignoredExts, registry=registry, allowExt=allowExt)
+        self.basepath = basepath
         self.relpath = relpath
         self.link = link
 
@@ -65,10 +67,10 @@ class SharedFile(ThrottledFile):
     def createSimilarFile(self, path):
         relpath = self.relpath
         if path:
-            relpath = relpath + '/' + path
+            relpath = path[len(self.basepath)+1:]
         f = self.__class__(path, bucketFilter=self.bucketFilter,
             defaultType=self.defaultType, ignoredExts=self.ignoredExts,
-            registry=self.registry, relpath=path, link=self.link)
+            registry=self.registry, relpath=relpath, basepath=self.basepath, link=self.link)
         f.processors = self.processors
         f.indexNames = self.indexNames[:]
         f.childNotFound = self.childNotFound
@@ -81,6 +83,8 @@ class SharedFile(ThrottledFile):
             self.contentTypes,
             self.contentEncodings,
             self.defaultType)
+        lister.relpath = self.relpath
+        lister.link = self.link
         return lister
 
 class DirectoryIndex(static.DirectoryLister, SharedResource):
