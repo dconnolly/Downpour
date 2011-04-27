@@ -1,4 +1,14 @@
 #!/usr/bin/env python
+
+# Debug mode for development
+import os
+if 'DOWNPOUR_DEBUG' in os.environ and os.environ['DOWNPOUR_DEBUG'] == '1':
+    import sys
+    from os.path import dirname, realpath
+    devpath = dirname(dirname(realpath(__file__)))
+    sys.path.insert(0, devpath)
+# End debug mode
+
 from downpour.core.daemon import Daemon
 from optparse import OptionParser
 
