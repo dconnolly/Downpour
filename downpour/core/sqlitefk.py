@@ -4,7 +4,7 @@ import storm.database
 
 try:
     from pysqlite2 import dbapi2 as sqlite
-except ImportErrr:
+except ImportError:
     try:
         from sqlite3 import dbapi2 as sqlite
     except ImportError:
