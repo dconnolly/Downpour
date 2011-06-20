@@ -29,3 +29,17 @@ Allow users to specify their own home dirs
    $USERNAME/. This defeats the purpose of media server auto-organization on the fly.
 -- Allow this directory to be specified in user settings/ edit user.
 -- Update user/edit template and render_GET requests to include this field.
+
+Create a Chrome(ium) extension that lets me right click torrent links and view context menu
+add them to the download queue. 
+-- Chrome extension js and background pages to add options to context menus for links
+   or selected text to add to download queue.
+-- Create some sort of twisted http listener that kicks off in the 
+   application/Application.start() process, that listens for requests from the extension.
+-- Requests will probably included GETs to see if downloads are already in the queue/active,
+   POSTs to send new ones.
+-- listener processes requests and if new+valid item, adds it to the dl queue.
+
+Same as above, but instead of single downloads add feeds to my config. 
+-- This could be as easy as opening the remote Downpour instance's add feed page with the feed
+   url pre-filled.
