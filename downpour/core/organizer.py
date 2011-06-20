@@ -124,12 +124,15 @@ rename_patterns = {
     'video/movie': [
         '%n (%y).%x',
         '%N(%y).%x',
+        '%N.[%y].%x',
         '%n.%x',
         '%N.%x'
     ],
     'video/tv': [
         '%z/Season %S/%z S%sE%e %n.%x',
+        '%z/Season %S/%Z.S%sE%e.%N.%x',
         '%z/Season %S/%Z.s%s.e%e.%N.%x',
+        '%z/S%S/%Z.S%sE%e.%N.%x',
         '%z/%z S%sE%e %n.%x',
         '%z/%Z.s%s.e%e.%N.%x',
         '%z/S%sE%e %n.%x',
