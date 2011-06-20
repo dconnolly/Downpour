@@ -1,0 +1,31 @@
+Rewrite feeds/checker so that it doesn't make me cry so much.
+-- Make it parse feeds without the tv-show bias it has now. 
+   Move that to functions that can be called if appropriate.
+-- Lay out skeleton for twitter/non-rss feeds.
+
+Keyword support for feeds.
+-- Add procesed CSV Unicode() attribute to Feed model
+-- Add keywords_matched CSV Unicode attribute to Download model
+-- Add keywords_matched field/display in downloads/detail, requests and templates.
+-- Add fields to add_feeds page and hook up the values to the request, 
+   and web/feeds/Add.render_GET()
+-- Add keyword parsing/sanitizing/checking functions to feed/checker, 
+   call them in update/feed_parsed.
+
+Matching feeds by quality
+-- Can have a separate field for checking quality of item (HDTV, 720p, BluRay, etc) but this is
+   not much different than above once complete. 
+   And uploaders are not always honest in their tagging anyway.
+-- If we did this in the torrent parsing itself, it would be more accurate, 
+   as the torrents often report aspect ratio/pixel HxW, size and running time, 
+   which give more reliable data for HD/720/etc.
+
+Feed name != Series Name
+-- Do not map Feed Name to Series name when moving/renaming/organizing finished d
+   ownloads from feeds.
+
+Allow users to specify their own home dirs
+-- Now the default is $DOWNPOUR_WORKING_DIR as specified in downpour.cfg, and then 
+   $USERNAME/. This defeats the purpose of media server auto-organization on the fly.
+-- Allow this directory to be specified in user settings/ edit user.
+-- Update user/edit template and render_GET requests to include this field.
