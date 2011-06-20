@@ -47,3 +47,11 @@ add them to the download queue.
 Same as above, but instead of single downloads add feeds to my config. 
 -- This could be as easy as opening the remote Downpour instance's add feed page with the feed
    url pre-filled.
+
+Allow users to specify their own organization/rename schemas.
+-- Add an 'other' option in the selects on the Libraries view, that when selected makes
+   the field appear to enter a new rename schema, with a div showing the different tokens
+   and their usages
+-- Possibly create a new model for these, which are attached to user accounts + libraries.
+--- This will be more work to do it right, which means re-writing how rename schemas are stored
+    as models in the store, etc, rather than just an array of strings as they are now.
