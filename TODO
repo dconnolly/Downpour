@@ -16,6 +16,11 @@ Allow organizing TV Series by Series/Season/Original.Filename.ext
 -- This doesn't go in organization.rename_patterns as it is.
 -- Pass in a string sub parameter to those patterns for the full filename.
 
+Fix stacktrace on browse/ directory.sort() which barfs on unicode chars (eg ö)
+-- The actual exception is in twisted.web.server.render(resrc) but I bet there is some 
+   encoding or unicode param when calling that or establishing the server instance.
+-- browse.py already does u'Motörhead' it looks like, this might need Unicode() explicitly?
+
 Matching feeds by quality
 -- Can have a separate field for checking quality of item (HDTV, 720p, BluRay, etc) but this is
    not much different than above once complete. 
