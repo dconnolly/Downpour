@@ -94,6 +94,20 @@ class Feed(object):
 
     user = Reference(user_id, User.id)
 
+class Keyword(object):
+
+    __storm_table__ = 'keywords'
+
+    id = Int(primary=True)
+    user_id = Int()
+    feed_id = Int()
+    value = Unicode()
+
+    user = Reference(user_id, User.id)
+    feed = Reference(feed_id, Feed.id)
+
+Feed.keywords = ReferenceSet(Feed.id, Keyword.feed_id)
+    
 class Download(object):
 
     __storm_table__ = 'downloads'
