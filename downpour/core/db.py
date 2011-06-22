@@ -82,6 +82,15 @@ def initialize_db(store):
         "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE"
         ")")
 
+    store.execute("CREATE TABLE keywords(" +
+        "id INTEGER PRIMARY KEY," +
+        "user_id INTEGER," +
+        "feed_id INTEGER," +
+        "value TEXT," +
+        "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,"
+        "FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE"
+        ")")
+
     store.execute("CREATE TABLE downloads (" +
         "id INTEGER PRIMARY KEY," +
         "user_id INTEGER," +
@@ -162,6 +171,24 @@ def upgrade_database(application):
         return schema_upgraders[VERSION](application, version)
     return False
 
+def upgrade_to_0_2_2(application, version):
+    upgraded = True
+    if version != '0.2.1':
+        upgraded = upgrade_to_0_2_1(application, version)
+    if upgraded:
+        logging.debug('Upgrading database from v0.2.1 to v0.2.2')
+        store = application.get_store()
+        store.execute("CREATE TABLE keywords(" +
+        "id INTEGER PRIMARY KEY," +
+        "user_id INTEGER," +
+        "feed_id INTEGER," +
+        "value TEXT," +
+        "FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE ON UPDATE CASCADE,"
+        "FOREIGN KEY(feed_id) REFERENCES feeds(id) ON DELETE CASCADE ON UPDATE CASCADE"
+        ")")
+        store.execute("UPDATE STATE SET value = '0.2.2' WHERE name = 'schema_version'")
+    return upgraded
+    
 def upgrade_to_0_2_1(application, version):
     upgraded = True
     if version != '0.2':
@@ -218,6 +245,7 @@ def upgrade_to_0_1_1pre(application, version):
 
 # Add new upgraders to this dict
 schema_upgraders = {
+    '0.2.2': upgrade_to_0_2_2,
     '0.2.1': upgrade_to_0_2_1,
     '0.2': upgrade_to_0_2,
     '0.1.1': upgrade_to_0_1_1,
