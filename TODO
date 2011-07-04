@@ -71,3 +71,4 @@ Same as above, but instead of single downloads add feeds to my config.
 -- This could be as easy as opening the remote Downpour instance's add feed page with the feed
    url pre-filled.
 
+Make download status bars update in realtime/ajax-time, instead of needing a refresh.
