@@ -34,6 +34,24 @@ Allow users to specify their own home dirs
 -- Allow this directory to be specified in user settings/ edit user.
 -- Update user/edit template and render_GET requests to include this field.
 
+Allow users to specify their own organization/rename schemas.
+-- Add an 'other' option in the selects on the Libraries view, that when selected makes
+   the field appear to enter a new rename schema, with a div showing the different tokens
+   and their usages
+-- Possibly create a new model for these, which are attached to user accounts + libraries.
+--- This will be more work to do it right, which means re-writing how rename schemas are stored
+    as models in the store, etc, rather than just an array of strings as they are now.
+
+Allow files within a download to be toggled off/on, during the download and during setup.
+-- When starting a download manually (not automatically from a feed), after the torrent
+   has been parsed, allow the files in the torrent to be toggled off (from a default of 'on')
+   so that they will not be downloaded. EG for nfo files or samples we don't care about.
+-- This can be added to the download view, so that a download's files can be toggled
+   while in progress.
+-- The download will be smart enough to update the percentage of download finished 
+   so that the download will actually be marked complete when the files that we actually 
+   care about have finished.
+
 Create a Chrome(ium) extension that lets me right click torrent links and view context menu
 add them to the download queue. 
 -- Chrome extension js and background pages to add options to context menus for links
@@ -48,10 +66,3 @@ Same as above, but instead of single downloads add feeds to my config.
 -- This could be as easy as opening the remote Downpour instance's add feed page with the feed
    url pre-filled.
 
-Allow users to specify their own organization/rename schemas.
--- Add an 'other' option in the selects on the Libraries view, that when selected makes
-   the field appear to enter a new rename schema, with a div showing the different tokens
-   and their usages
--- Possibly create a new model for these, which are attached to user accounts + libraries.
---- This will be more work to do it right, which means re-writing how rename schemas are stored
-    as models in the store, etc, rather than just an array of strings as they are now.
